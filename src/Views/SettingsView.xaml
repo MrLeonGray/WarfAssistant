@@ -1,0 +1,164 @@
+<UserControl x:Class="WarfAssistant.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="760" d:DesignWidth="1120">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- HEADER -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="НАСТРОЙКИ ПРОФИЛЯ, КЭШ И СИНХРОНИЗАЦИЯ" FontSize="15" FontWeight="Bold" Foreground="{StaticResource BrushGold}" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" Background="#132D20" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                    <TextBlock Text="🛡 БЕЗОПАСНЫЙ РЕЖИМ (БЕЗ EE.LOG И ИНЖЕКТА)" FontSize="9.5" FontWeight="Bold" Foreground="#34D399"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 2-COLUMN CARDS -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="12"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- LEFT CARD: PROFILE SAVES, BACKUPS & IMPORT/EXPORT -->
+                <Border Grid.Column="0" Grid.Row="0" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderBright}"
+                        BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="💾 ЛОКАЛЬНЫЙ ПРОФИЛЬ (USERDATA.JSON)" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushGold}" Margin="0,0,0,10"/>
+
+                        <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Имя Тэнно:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding PlayerName, UpdateSourceTrigger=LostFocus}"
+                                             Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
+                                             Foreground="{StaticResource BrushGoldBright}" FontSize="11" FontWeight="Bold" Padding="7,4"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="Папка сохранений:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding Storage.SaveDirectoryPath}" HorizontalAlignment="Right" FontSize="10.5" Foreground="{StaticResource BrushCyan}" TextTrimming="CharacterEllipsis" MaxWidth="290"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="Последний бэкап:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding LastBackupDisplay}" HorizontalAlignment="Right" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="Текущий прогресс:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding MasterySummary.ProgressText}" HorizontalAlignment="Right" FontSize="10.5" Foreground="#34D399" TextTrimming="CharacterEllipsis" MaxWidth="310"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <Button Content="📁 Открыть папку" Command="{Binding OpenSaveFolderCommand}"
+                                    Style="{StaticResource GoldButton}" Padding="11,7" Margin="0,0,7,6"/>
+                            <Button Content="📦 Бэкап" Command="{Binding CreateBackupCommand}"
+                                    Style="{StaticResource WarfButton}" Padding="11,7" Margin="0,0,7,6"/>
+                            <Button Content="📤 Экспорт" Command="{Binding ExportProfileCommand}"
+                                    Style="{StaticResource WarfButton}" Padding="11,7" Margin="0,0,7,6"/>
+                            <Button Content="📥 Импорт" Command="{Binding ImportProfileCommand}"
+                                    Style="{StaticResource WarfButton}" Padding="11,7" Margin="0,0,0,6"/>
+                        </WrapPanel>
+
+                        <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1" CornerRadius="6" Padding="10,7">
+                            <WrapPanel Orientation="Horizontal">
+                                <CheckBox Content="🔔 Системные уведомления Windows (трей)"
+                                          IsChecked="{Binding DesktopNotificationsEnabled, Mode=TwoWay}"
+                                          FontSize="10.5" Margin="0,0,16,0"/>
+                                <CheckBox Content="🔊 Звуковой сигнал"
+                                          IsChecked="{Binding SoundNotificationsEnabled, Mode=TwoWay}"
+                                          FontSize="10.5"/>
+                            </WrapPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- RIGHT CARD: DISK IMAGE CACHE & API SYNC -->
+                <Border Grid.Column="2" Grid.Row="0" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                        BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="🖼️ КЭШ КАРТИНОК И СИНХРОНИЗАЦИЯ DE API" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushCyan}" Margin="0,0,0,10"/>
+
+                        <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="Дисковый кэш иконок и баннеров:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding DiskCacheSummary}" HorizontalAlignment="Right" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="Статус каталога:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding Collection.SyncStatusText}" HorizontalAlignment="Right" FontSize="10.5" Foreground="#34D399"/>
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="Живой Worldstate:" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding Events.SyncLabel}" HorizontalAlignment="Right" FontSize="10.5" Foreground="{StaticResource BrushCyan}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <WrapPanel>
+                            <Button Content="🔄 Синхр. базу DE API" Command="{Binding RefreshCatalogApiCommand}"
+                                    Style="{StaticResource GoldButton}" Padding="11,7" Margin="0,0,7,6"/>
+                            <Button Content="📊 Обновить stats" Command="{Binding RefreshCacheStatsCommand}"
+                                    Style="{StaticResource WarfButton}" Padding="11,7" Margin="0,0,7,6"/>
+                            <Button Content="🗑 Очистить картинки" Command="{Binding ClearImageCacheCommand}"
+                                    Style="{StaticResource WarfButton}" Padding="11,7" Margin="0,0,7,6"/>
+                            <Button Content="🧹 Очистить JSON-кэш" Command="{Binding ClearDataCacheCommand}"
+                                    Style="{StaticResource WarfButton}" Padding="11,7" Margin="0,0,0,6"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- BOTTOM SPANNING CARD: ARCHITECTURE & LIVE DATA SOURCES -->
+                <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2"
+                        Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                        BorderThickness="1" CornerRadius="8" Padding="14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="🛡 БЕЗОПАСНЫЙ РЕЖИМ РАБОТЫ (TOS COMPLIANT)" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource BrushSuccessGreen}" Margin="0,0,0,6"/>
+                            <TextBlock Text="• Отсутствует чтение памяти игры (RPM/DLL) и парсинг защищённых локальных логов EE.log&#x0a;• Атомарная потокобезопасная запись профиля в userdata.json (резервные копии + экспорт/импорт)&#x0a;• Встроенные сжатые оффлайн-базы: мгновенный старт без интернета"
+                                       FontSize="10.5" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="🌐 ЖИВЫЕ ИСТОЧНИКИ И ТЕХНИЧЕСКИЙ СТЕК" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}" Margin="0,0,0,6"/>
+                            <TextBlock Text="• DE PublicExport LZMA + worldState.php + browse.wf (Worldstate, Дувири, Инкарнон, Арбитраж)&#x0a;• Warframe.Market v1/v2 API (Crossplay PC ордеры, арбитраж сетов, аукционы Модов Разлома)&#x0a;• DE Weekly Riven Trade API (официальная медианная статистика торгов по PC)"
+                                       FontSize="10.5" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

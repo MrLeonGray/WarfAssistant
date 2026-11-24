@@ -1,0 +1,31 @@
+# .NET / WPF build artifacts
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+*.pdb
+*.exe
+*.dll
+*.deps.json
+*.runtimeconfig.json
+
+# Keep batch build script and source resources intact
+!build.bat
+
+# Visual Studio / VS Code / IDE metadata
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.tmp
+
+# WarfAssistant local runtime cache & user profile saves
+data/cache/
+data/saves/
+
+# Local scratch scripts & conversation logs
+scratch/
+CHAT_HISTORY.txt

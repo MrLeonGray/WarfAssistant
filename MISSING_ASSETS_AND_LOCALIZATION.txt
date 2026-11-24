@@ -1,0 +1,140 @@
+﻿========================================================================
+ОТЧЁТ ПО КАРТИНКАМ И РУССКОЙ ЛОКАЛИЗАЦИИ В API WARFRAME
+Обновлено автоматически: 2026-11-23 18:15:49
+Всего в каталоге: 5 701 предметов
+========================================================================
+
+[1] КАРТИНКИ:
+  • Предметы без пути к иконке во всех API (DE + browse.wf + WarframeStat): 77
+  • Каскад загрузки: 1) data/assets/items -> 2) data/cache/images (диск)
+    -> 3) browse.wf{icon} -> 4) content.warframe.com/PublicExport{icon}!{hash}
+    -> 5) cdn.warframestat.us/img/{wsImg}
+    - [Варфреймы / Prime] Цитрина Прайм (Citrine Prime) | /Lotus/Powersuits/Geode/CitrinePrime
+    - [Варфреймы / Стандартный] Нарин (Narin) | /Lotus/Powersuits/Duelist/Duelist
+    - [Вторичное / Стандартный] Аксондол (Aksondol) | /Lotus/Weapons/Tenno/Pistols/DuelistPistols/DuelistPistols
+    - [Основное / Prime] Стефлос Прайм (Steflos Prime) | /Lotus/Weapons/Tenno/LongGuns/PrimeSteflos/PrimeSteflosShotgun
+    - [Основное / Стандартный] Нунчаса (Nunchasa) | /Lotus/Weapons/Tenno/Bows/DuelistBow/DuelistBow
+    - [Ближний бой / Prime] Коруфелл Прайм (Corufell Prime) | /Lotus/Weapons/Tenno/Archwing/Melee/PrimeCorufell/PrimeCorufellScytheWeapon
+    - [Косметика / Броня] Наплечный медальон «Тидон» | /Lotus/Upgrades/Skins/Armor/DuelistArmour/DuelistArmourA
+    - [Косметика / Броня] Нагрудный медальон «Тидон» | /Lotus/Upgrades/Skins/Armor/DuelistArmour/DuelistArmourC
+    - [Косметика / Броня] Наголенный медальон «Тидон» | /Lotus/Upgrades/Skins/Armor/DuelistArmour/DuelistArmourL
+    - [Косметика / Броня] Наплечники «Контегор» | /Lotus/Upgrades/Skins/Armor/EntNecraArmorTwo/EntNecraArmorTwoA
+    - [Косметика / Броня] Нагрудник «Контегор» | /Lotus/Upgrades/Skins/Armor/EntNecraArmorTwo/EntNecraArmorTwoC
+    - [Косметика / Броня] Наголенники «Контегор» | /Lotus/Upgrades/Skins/Armor/EntNecraArmorTwo/EntNecraArmorTwoL
+    - [Косметика / Броня] Eskhatos Pauldrons | /Lotus/Upgrades/Skins/Armor/EvilBaroArmour/EvilBaroArmourA
+    - [Косметика / Броня] Наплечники «Опула» | /Lotus/Upgrades/Skins/Armor/Opula/OpulaArmorA
+    - [Косметика / Броня] Нагрудник «Опула» | /Lotus/Upgrades/Skins/Armor/Opula/OpulaArmorC
+    - [Косметика / Броня] Наголенники «Опула» | /Lotus/Upgrades/Skins/Armor/Opula/OpulaArmorL
+    - [Косметика / Шлем] Шлем Джейд: Ковен | /Lotus/Upgrades/Skins/Choir/SWCovenJadeHelmet
+    - [Косметика / Скин] Скин Джейд: Ковен | /Lotus/Upgrades/Skins/Choir/SWCovenJadeSkin
+    - [Косметика / Сигилы] Epoch Operation Vessel Emblem | /Lotus/Upgrades/Skins/Clan/EpochOperationEmblemItem
+    - [Косметика / Прочее] Eskhatos Sekhara | /Lotus/Upgrades/Skins/Clan/EvilBaroHaloBadgeItem
+    - [Косметика / Скин] Скин Мандонеля: Читедра | /Lotus/Upgrades/Skins/ConcreteFrame/QorvexDeluxeArchGunSkin
+    - [Косметика / Шлем] Шлем Корвекса: Базилика | /Lotus/Upgrades/Skins/ConcreteFrame/QorvexDeluxeHelmet
+    - [Косметика / Скин] Скин Корвекса: Базилика | /Lotus/Upgrades/Skins/ConcreteFrame/QorvexDeluxeSkin
+    - [Косметика / Сигна] Сигна: Исагеум | /Lotus/Upgrades/Skins/Crowns/DuelistCrown
+    - [Косметика / Сигна] Conquera Cateura Signa | /Lotus/Upgrades/Skins/Crowns/QTCCCatSignaCrown
+    - [Косметика / Сигна] Сигна: Готика | /Lotus/Upgrades/Skins/Crowns/SWGothicaSignaCrown
+    - [Косметика / Сигна] Сигна: Вермис | /Lotus/Upgrades/Skins/Crowns/SWVermisSignaCrown
+    - [Косметика / Броня] Наплечная броня Банши: Тренодия | /Lotus/Upgrades/Skins/Decree/BansheeDeluxeBArmLeftArmor
+    - [Косметика / Шлем] Шлем Банши: Тренодия | /Lotus/Upgrades/Skins/Decree/BansheeDeluxeBHelmet
+    - [Косметика / Скин] Скин Банши: Тренодия | /Lotus/Upgrades/Skins/Decree/BansheeDeluxeBSkin
+    - [Косметика / Анимации] Narin Agile Animation Set | /Lotus/Upgrades/Skins/Duelist/DuelistAgileAnims
+    - [Косметика / Шлем] Шлем Нарин Баридеги | /Lotus/Upgrades/Skins/Duelist/DuelistAltHelmet
+    - [Косметика / Шлем] Шлем Нарин | /Lotus/Upgrades/Skins/Duelist/DuelistHelmet
+    - [Косметика / Анимации] Narin Noble Animation Set | /Lotus/Upgrades/Skins/Duelist/DuelistNobleAnims
+    - [Косметика / Скин] Скин Нарин | /Lotus/Upgrades/Skins/Duelist/DuelistSkin
+    - [Косметика / Эфемера] Eskhatos Infinitas Ephemera | /Lotus/Upgrades/Skins/Effects/BaroEvilEphemeraB
+    - [Косметика / Эфемера] Эфемера «Победа III» | /Lotus/Upgrades/Skins/Effects/Conquera2026Ephemera
+    - [Косметика / Эфемера] Эфемера Гангрим | /Lotus/Upgrades/Skins/Effects/DuelistEphemera
+    - [Косметика / Эфемера] Эфемера: Сеонанг | /Lotus/Upgrades/Skins/Effects/DuelistSpiritEphemera
+    - [Косметика / Эфемера] Эфемера: Колокольня | /Lotus/Upgrades/Skins/Effects/QorvexDeluxeEphemera
+    - [Косметика / Прочее] Украшения Цитрины Прайм | /Lotus/Upgrades/Skins/Geode/CitrinePrimeAux
+    - [Косметика / Шлем] Шлем Цитрины Прайм | /Lotus/Upgrades/Skins/Geode/CitrinePrimeHelmet
+    - [Косметика / Скин] Скин Цитрины Прайм | /Lotus/Upgrades/Skins/Geode/CitrinePrimeSkin
+    - [Косметика / Шлем] Шлем Цитрины: Гелиотропия | /Lotus/Upgrades/Skins/Geode/SWCitrineHeliotropiaHelmet
+    - [Косметика / Прочее] Eskhatos Sugatra | /Lotus/Upgrades/Skins/MeleeDangles/EvilBaroSugatraMeleeDangle
+    - [Косметика / Прочее] Сугатра: Алюмети Прайм | /Lotus/Upgrades/Skins/MeleeDangles/PrimeCitrineSugatra
+    - [Косметика / Прочее] Jack O'Naut Keychain Sugatra | /Lotus/Upgrades/Skins/MeleeDangles/PumpkinMeleeDangle
+    - [Косметика / Скин] Скин Мосолона: Эсхатос | /Lotus/Upgrades/Skins/Necramech/MechWeapon/EvilBaroMausolonSkin
+    - [Косметика / Шлем] Eschatos Necramech Helmet | /Lotus/Upgrades/Skins/Necramech/EvilBaroNecramechHelmet
+    - [Косметика / Скин] Eskhatos Necramech Skin | /Lotus/Upgrades/Skins/Necramech/EvilBaroNecramechSkin
+    - [Косметика / Прочее] Серьги: Спинель Прайм | /Lotus/Upgrades/Skins/Operator/Accessories/CitrinePrimeEarpiece
+    - [Косметика / Прочее] Окуляры: Спинель Прайм | /Lotus/Upgrades/Skins/Operator/Accessories/CitrinePrimeEyepiece
+    - [Косметика / Прочее] Украшения для лица: Спинель Прайм | /Lotus/Upgrades/Skins/Operator/Accessories/CitrinePrimeMouthPiece
+    - [Косметика / Скин] Скин Усилителя: Вацис | /Lotus/Upgrades/Skins/Operator/Amp/EntratiAmpSkin
+    - [Косметика / Прочее] Тон кожи B-17 [Наследие] | /Lotus/Upgrades/Skins/Operator/Heads/ExtraAdultAlbedoC
+    - [Косметика / Прочее] Тон кожи B-17 [Наследие] | /Lotus/Upgrades/Skins/Operator/Heads/ExtraAlbedoC
+    - [Косметика / Скин] Eskhatos Parazon Skin | /Lotus/Upgrades/Skins/Parazon/EvilBaroParazonSkin
+    - [Косметика / Сандана] Dhampyre Syandana | /Lotus/Upgrades/Skins/Scarves/DraculaCapeSyandana
+    - [Косметика / Сандана] Сандана Дуруми | /Lotus/Upgrades/Skins/Scarves/DuelistSyandana
+    - [Косметика / Сандана] Сандана: Сфатика Прайм | /Lotus/Upgrades/Skins/Scarves/PrimeCitrineSyandana
+    - [Косметика / Сандана] Сандана: Гаркулёк | /Lotus/Upgrades/Skins/Scarves/QorvexDeluxeSyandana
+    - [Косметика / Сандана] Сандана: Реликвия | /Lotus/Upgrades/Skins/Scarves/SWReliquiaSyandana
+    - [Косметика / Прочее] Маска стража: Гаст | /Lotus/Upgrades/Skins/Sentinels/Masks/BansheeDlxSentMask
+    - [Косметика / Скин] Скин стража: Гаст | /Lotus/Upgrades/Skins/Sentinels/Skins/BansheeDlxSentSkin
+    - [Косметика / Прочее] Хвост стража: Гаст | /Lotus/Upgrades/Skins/Sentinels/Tails/BansheeDlxSentTail
+    - [Косметика / Прочее] Крылья стража: Гаст | /Lotus/Upgrades/Skins/Sentinels/Wings/BansheeDlxSentWings
+    - [Косметика / Сигилы] Taubound Sigil | /Lotus/Upgrades/Skins/Sigils/EpochOperationSigil
+    - [Косметика / Сигилы] Сигил: Глациум | /Lotus/Upgrades/Skins/Sigils/FrozenSigil
+    - [Косметика / Скин] Niveus Nepheri Skin | /Lotus/Upgrades/Skins/Weapons/Daggers/ArchonDaggerDuelistSkin
+    - [Косметика / Скин] Niveus Orvius Skin | /Lotus/Upgrades/Skins/Weapons/Glaives/TeshinGlaiveDuelistSkin
+    - [Косметика / Скин] Niveus Paracesis Skin | /Lotus/Upgrades/Skins/Weapons/GreatSword/BallasSwordDuelistSkin
+    - [Косметика / Скин] Niveus Glaxion Skin | /Lotus/Upgrades/Skins/Weapons/LongGuns/CrpFreezeRayDuelistSkin
+    - [Косметика / Скин] Niveus Quellor Skin | /Lotus/Upgrades/Skins/Weapons/LongGuns/RailjackRifleDuelistSkin
+    - [Косметика / Скин] Neote Rapier Skin | /Lotus/Upgrades/Skins/Weapons/Rapier/IcebladeRapierSkin
+    - [Косметика / Скин] Niveus Dark Dagger Skin | /Lotus/Upgrades/Skins/Weapons/Swords/DarkDaggerDuelistSkin
+    - [Косметика / Скин] Niveus Dark Split-Sword Skin | /Lotus/Upgrades/Skins/Weapons/Swords/DarkSplitSwordDuelistSkin
+    - [Косметика / Скин] Niveus Dark Sword Skin | /Lotus/Upgrades/Skins/Weapons/Swords/DarkSwordDuelistSkin
+
+[2] ОТСУТСТВУЕТ КИРИЛЛИЧЕСКИЙ ПЕРЕВОД (RU) В ОФИЦИАЛЬНОМ EXPORT DE (27):
+  • [Основное / Стандартный] AX-52 (/Lotus/Weapons/Lasria/AK47/TC2024AK47Weapon)
+  • [Косметика / Броня] Eskhatos Pauldrons (/Lotus/Upgrades/Skins/Armor/EvilBaroArmour/EvilBaroArmourA)
+  • [Косметика / Сигилы] Epoch Operation Vessel Emblem (/Lotus/Upgrades/Skins/Clan/EpochOperationEmblemItem)
+  • [Косметика / Прочее] Eskhatos Sekhara (/Lotus/Upgrades/Skins/Clan/EvilBaroHaloBadgeItem)
+  • [Косметика / Сигна] Conquera Cateura Signa (/Lotus/Upgrades/Skins/Crowns/QTCCCatSignaCrown)
+  • [Косметика / Анимации] Narin Agile Animation Set (/Lotus/Upgrades/Skins/Duelist/DuelistAgileAnims)
+  • [Косметика / Анимации] Narin Noble Animation Set (/Lotus/Upgrades/Skins/Duelist/DuelistNobleAnims)
+  • [Косметика / Эфемера] Eskhatos Infinitas Ephemera (/Lotus/Upgrades/Skins/Effects/BaroEvilEphemeraB)
+  • [Косметика / Прочее] Eskhatos Sugatra (/Lotus/Upgrades/Skins/MeleeDangles/EvilBaroSugatraMeleeDangle)
+  • [Косметика / Прочее] Jack O'Naut Keychain Sugatra (/Lotus/Upgrades/Skins/MeleeDangles/PumpkinMeleeDangle)
+  • [Косметика / Шлем] Eschatos Necramech Helmet (/Lotus/Upgrades/Skins/Necramech/EvilBaroNecramechHelmet)
+  • [Косметика / Скин] Eskhatos Necramech Skin (/Lotus/Upgrades/Skins/Necramech/EvilBaroNecramechSkin)
+  • [Косметика / Скин] Eskhatos Parazon Skin (/Lotus/Upgrades/Skins/Parazon/EvilBaroParazonSkin)
+  • [Косметика / Сандана] Dhampyre Syandana (/Lotus/Upgrades/Skins/Scarves/DraculaCapeSyandana)
+  • [Косметика / Сигилы] Taubound Sigil (/Lotus/Upgrades/Skins/Sigils/EpochOperationSigil)
+  • [Косметика / Сигилы] Primate Sigil (/Lotus/Upgrades/Skins/Sigils/MonquisCYSigil)
+  • [Косметика / Сигилы] Arbiters of Hexis Sigil (/Lotus/Upgrades/Skins/Sigils/SyndicateSigilArbitersOfHexisA)
+  • [Косметика / Скин] Niveus Nepheri Skin (/Lotus/Upgrades/Skins/Weapons/Daggers/ArchonDaggerDuelistSkin)
+  • [Косметика / Скин] Niveus Orvius Skin (/Lotus/Upgrades/Skins/Weapons/Glaives/TeshinGlaiveDuelistSkin)
+  • [Косметика / Скин] Niveus Paracesis Skin (/Lotus/Upgrades/Skins/Weapons/GreatSword/BallasSwordDuelistSkin)
+  • [Косметика / Скин] Niveus Glaxion Skin (/Lotus/Upgrades/Skins/Weapons/LongGuns/CrpFreezeRayDuelistSkin)
+  • [Косметика / Скин] Niveus Quellor Skin (/Lotus/Upgrades/Skins/Weapons/LongGuns/RailjackRifleDuelistSkin)
+  • [Косметика / Скин] Neote Rapier Skin (/Lotus/Upgrades/Skins/Weapons/Rapier/IcebladeRapierSkin)
+  • [Косметика / Скин] Niveus Dark Dagger Skin (/Lotus/Upgrades/Skins/Weapons/Swords/DarkDaggerDuelistSkin)
+  • [Косметика / Скин] Niveus Dark Split-Sword Skin (/Lotus/Upgrades/Skins/Weapons/Swords/DarkSplitSwordDuelistSkin)
+  • [Косметика / Скин] Niveus Dark Sword Skin (/Lotus/Upgrades/Skins/Weapons/Swords/DarkSwordDuelistSkin)
+  • [Украшения Убежища / Декор Орбитера] This Is What You Are (/Lotus/Types/Items/ShipDecos/Venus/TNWGlintLotusDisplay)
+
+[3] ПРИМЕЧАНИЕ ПО ЭКСКЛЮЗИВАМ ОСНОВАТЕЛЕЙ (FOUNDERS):
+  • Скрываются переключателем в фильтрах: Excalibur Prime, Lato Prime, Skana Prime.
+  • В официальных манифестах DE и вики у Набора Основателей никогда не было 'Сандана Прайм'
+    (только глифы/сигилы Основателей; Misa Prime относится к Возрождению Прайм / Варзии).
+
+[4] ВЕРСИИ МАНИФЕСТОВ DE PUBLIC EXPORT:
+  • ExportCustoms_ru.json!00_RrV3X8yoX0h53bAQ3fkYlg
+  • ExportDrones_ru.json!00_j80gbgNJWpZOlvaFVuEdQQ
+  • ExportFlavour_ru.json!00_kB5x01z4X38BrIn9KWeqqw
+  • ExportFusionBundles_ru.json!00_0WCoQj7evNtLSJTk8AAa3g
+  • ExportGear_ru.json!00_yPmMA9C4gNQbS61zuaauFw
+  • ExportKeys_ru.json!00_GhHJrzp-vn+pDFghzjrYPw
+  • ExportManifest.json!00_y10Y6QId+-io-dCB3GMEmg
+  • ExportRecipes_ru.json!00_oac+LCAtIyqDxZF8Qe1ZZA
+  • ExportRegions_ru.json!00_qX5H9NpaU5S7ISMfMTcsUg
+  • ExportRelicArcane_ru.json!00_TZh5xKm4GoaGaOITwudtQA
+  • ExportResources_ru.json!00_5ytRMRItZwNiky1Nn4F3FQ
+  • ExportSentinels_ru.json!00_GeOakfEUq01mM0D9vW43qg
+  • ExportSortieRewards_ru.json!00_HI8Rg9t44wBYbOwFYPXoSg
+  • ExportUpgrades_ru.json!00_EFfvNLcL0ELsW88Fle8j+w
+  • ExportWarframes_ru.json!00_gWB+1GezkOFXkMao6VvOLg
+  • ExportWeapons_ru.json!00_-eZsNf-U8M1-mRwldfJK6A

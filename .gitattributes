@@ -1,0 +1,25 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# Windows source & project files
+*.cs      text diff=csharp eol=crlf
+*.xaml    text eol=crlf
+*.csproj  text eol=crlf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.json    text eol=crlf
+*.md      text eol=crlf
+*.txt     text eol=crlf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+.editorconfig  text eol=lf
+
+# Binary assets (never mangle with CRLF conversion)
+*.gz      binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.webp    binary
+*.ico     binary
+*.exe     binary
+*.dll     binary

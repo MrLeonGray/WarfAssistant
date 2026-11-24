@@ -1,0 +1,1134 @@
+<UserControl x:Class="WarfAssistant.Views.BuilderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="clr-namespace:WarfAssistant.Models"
+             mc:Ignorable="d"
+             d:DesignHeight="820" d:DesignWidth="1200">
+    <UserControl.Resources>
+        <Style x:Key="DarkComboStyle" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="Background" Value="{StaticResource BrushBgInput}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderBright}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          BorderThickness="{TemplateBinding BorderThickness}"
+                                          Focusable="False" ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="6,4">
+                                            <Grid MinHeight="24">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="1" Text="▾" Foreground="{StaticResource BrushGold}" FontSize="11" VerticalAlignment="Center" Margin="6,0,2,0"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              TextElement.Foreground="{StaticResource BrushTextPrimary}"
+                                              Margin="7,3,24,3" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Border Background="#111824" BorderBrush="{StaticResource BrushGold}" BorderThickness="1"
+                                        CornerRadius="5" MinWidth="{TemplateBinding ActualWidth}" MaxWidth="430" MaxHeight="320" Margin="0,2,0,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsPresenter SnapsToDevicePixels="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Padding" Value="6,4"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#1E2C40"/>
+                                <Setter Property="Foreground" Value="{StaticResource BrushCyan}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Platform / Weapon Item Template with Artwork -->
+        <DataTemplate x:Key="PlatformComboItemTemplate" DataType="{x:Type models:BuilderPlatformItem}">
+            <Grid ToolTip="{Binding DisplayHeader}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28"/>
+                    <ColumnDefinition Width="7"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="26" Height="26" Background="#0A1018" BorderBrush="#26384F" BorderThickness="1" CornerRadius="3">
+                    <Image Source="{Binding IconBitmap}" Stretch="Uniform" Margin="1"/>
+                </Border>
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding SubCategory}" FontSize="8.5" Foreground="{StaticResource BrushTextMuted}" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Arcane Item Template with Artwork -->
+        <DataTemplate x:Key="ArcaneComboItemTemplate" DataType="{x:Type models:BuilderArcaneItem}">
+            <Grid ToolTip="{Binding Description}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="26"/>
+                    <ColumnDefinition Width="7"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="24" Height="24" Background="#0A1018" BorderBrush="#334866" BorderThickness="1" CornerRadius="3">
+                    <Image Source="{Binding IconBitmap}" Stretch="Uniform" Margin="1"/>
+                </Border>
+                <TextBlock Grid.Column="2" Text="{Binding Name}" FontSize="10.5" FontWeight="SemiBold"
+                           Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- In-Game Warframe Arsenal Mod Card Templates (Primary & Secondary) -->
+        <DataTemplate x:Key="ArsenalPrimaryModCardTemplate" DataType="{x:Type models:BuilderModSlot}">
+            <Border Background="#0D141F" BorderBrush="{Binding BorderColor}" BorderThickness="1.2"
+                    CornerRadius="4" Padding="4,3" Margin="2" MinHeight="82"
+                    ToolTip="{Binding DisplayStatShort}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Bar: Slot Polarity Cycle | Drain Badge | Remove -->
+                    <Grid Grid.Row="0" Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="{Binding SlotPolarityGlyph}" FontSize="8" FontWeight="Bold" Padding="4,0" MinWidth="16"
+                                Command="{Binding DataContext.CycleSlotPolarityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Background="#172233" BorderBrush="#2D4059" BorderThickness="1"
+                                Foreground="{StaticResource BrushCyan}" Cursor="Hand" ToolTip="Сменить полярность ячейки (Форма)"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DrainBadge}" FontSize="8.5" FontWeight="Bold"
+                                   Foreground="{Binding DrainColor}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Content="✕" FontSize="8" Padding="2,0"
+                                Visibility="{Binding HasMod, Converter={StaticResource BoolToVis}}"
+                                Command="{Binding DataContext.RemoveSlotModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushHealthRed}" Cursor="Hand" ToolTip="Снять мод"/>
+                    </Grid>
+
+                    <!-- Center: Mod Artwork Thumbnail + Title -->
+                    <Button Grid.Row="1" Command="{Binding DataContext.OpenPrimarySlotPickerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Background="Transparent" BorderThickness="0" Padding="0"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Cursor="Hand">
+                        <StackPanel>
+                            <Border Height="28" Background="#070B11" BorderBrush="#1C293B" BorderThickness="1" CornerRadius="2" Margin="0,0,0,2">
+                                <Grid>
+                                    <TextBlock Text="+" FontSize="12" FontWeight="Bold" Foreground="#354A66"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasModIcon}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Image Source="{Binding ModIconBitmap}" Stretch="UniformToFill" SnapsToDevicePixels="True"
+                                           Visibility="{Binding HasModIcon, Converter={StaticResource BoolToVis}}"/>
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="{Binding DisplayName}" FontSize="8.5" FontWeight="SemiBold"
+                                       Foreground="{Binding TitleColor}" TextAlignment="Center"
+                                       TextWrapping="Wrap" MaxHeight="24" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Bottom Rank Bar -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                Visibility="{Binding HasMod, Converter={StaticResource BoolToVis}}">
+                        <Button Content="−" FontSize="8" Width="13" Height="13" Padding="0"
+                                Command="{Binding DataContext.StepSlotRankDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" Background="#17202D" BorderThickness="0" Foreground="{StaticResource BrushTextSecondary}" Cursor="Hand"/>
+                        <TextBlock Text="{Binding RankText}" FontSize="8" Foreground="{StaticResource BrushGold}" Margin="4,0" VerticalAlignment="Center"/>
+                        <Button Content="+" FontSize="8" Width="13" Height="13" Padding="0"
+                                Command="{Binding DataContext.StepSlotRankUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" Background="#17202D" BorderThickness="0" Foreground="{StaticResource BrushCyan}" Cursor="Hand"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ArsenalSecondaryModCardTemplate" DataType="{x:Type models:BuilderModSlot}">
+            <Border Background="#0D141F" BorderBrush="{Binding BorderColor}" BorderThickness="1.2"
+                    CornerRadius="4" Padding="4,3" Margin="2" MinHeight="82"
+                    ToolTip="{Binding DisplayStatShort}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="{Binding SlotPolarityGlyph}" FontSize="8" FontWeight="Bold" Padding="4,0" MinWidth="16"
+                                Command="{Binding DataContext.CycleSlotPolarityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Background="#172233" BorderBrush="#2D4059" BorderThickness="1"
+                                Foreground="{StaticResource BrushCyan}" Cursor="Hand" ToolTip="Сменить полярность ячейки (Форма)"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DrainBadge}" FontSize="8.5" FontWeight="Bold"
+                                   Foreground="{Binding DrainColor}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Content="✕" FontSize="8" Padding="2,0"
+                                Visibility="{Binding HasMod, Converter={StaticResource BoolToVis}}"
+                                Command="{Binding DataContext.RemoveSlotModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushHealthRed}" Cursor="Hand" ToolTip="Снять мод"/>
+                    </Grid>
+
+                    <Button Grid.Row="1" Command="{Binding DataContext.OpenSecondarySlotPickerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Background="Transparent" BorderThickness="0" Padding="0"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Cursor="Hand">
+                        <StackPanel>
+                            <Border Height="28" Background="#070B11" BorderBrush="#1C293B" BorderThickness="1" CornerRadius="2" Margin="0,0,0,2">
+                                <Grid>
+                                    <TextBlock Text="+" FontSize="12" FontWeight="Bold" Foreground="#354A66"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasModIcon}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Image Source="{Binding ModIconBitmap}" Stretch="UniformToFill" SnapsToDevicePixels="True"
+                                           Visibility="{Binding HasModIcon, Converter={StaticResource BoolToVis}}"/>
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="{Binding DisplayName}" FontSize="8.5" FontWeight="SemiBold"
+                                       Foreground="{Binding TitleColor}" TextAlignment="Center"
+                                       TextWrapping="Wrap" MaxHeight="24" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Button>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                Visibility="{Binding HasMod, Converter={StaticResource BoolToVis}}">
+                        <Button Content="−" FontSize="8" Width="13" Height="13" Padding="0"
+                                Command="{Binding DataContext.StepSlotRankDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" Background="#17202D" BorderThickness="0" Foreground="{StaticResource BrushTextSecondary}" Cursor="Hand"/>
+                        <TextBlock Text="{Binding RankText}" FontSize="8" Foreground="{StaticResource BrushGold}" Margin="4,0" VerticalAlignment="Center"/>
+                        <Button Content="+" FontSize="8" Width="13" Height="13" Padding="0"
+                                Command="{Binding DataContext.StepSlotRankUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" Background="#17202D" BorderThickness="0" Foreground="{StaticResource BrushCyan}" Cursor="Hand"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============================================== -->
+        <!-- TOP HEADER: 8 CATEGORIES, SAVE & EXPORT        -->
+        <!-- ============================================== -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgCard}"
+                BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
+                CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Row 0: Title + Save/Export Controls -->
+                <Grid Grid.Row="0" Margin="0,0,0,7">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="СВЯЗАННЫЙ БИЛДЕР АРСЕНАЛА"
+                                   FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}" VerticalAlignment="Center"/>
+                        <Border Grid.Column="1" Background="#211B0D" BorderBrush="{StaticResource BrushBorderGold}" BorderThickness="1"
+                                CornerRadius="3" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="🔗 ЛИНК ФРЕЙМ ↔ ОРУЖИЕ" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1" CornerRadius="4" Padding="7,4" Margin="0,0,6,0" Width="170">
+                            <Grid>
+                                <TextBox Text="{Binding CustomBuildName, UpdateSourceTrigger=PropertyChanged}"
+                                         Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushTextPrimary}" FontSize="11"/>
+                                <TextBlock Text="Название билда..." Foreground="{StaticResource BrushTextMuted}" FontSize="10"
+                                           IsHitTestVisible="False" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CustomBuildName}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                        <Button Content="💾 Сохранить" Command="{Binding SaveBuildCommand}" Style="{StaticResource GoldButton}" Padding="10,5" Margin="0,0,6,0"/>
+                        <Button Content="📥 Импорт" Command="{Binding ImportBuildCommand}" Style="{StaticResource WarfButton}" Padding="9,5" Margin="0,0,6,0"
+                                ToolTip="Вставить моды из скопированного билда (буфер обмена)"/>
+                        <Button Content="📋 Экспорт" Command="{Binding ExportBuildCommand}" Style="{StaticResource WarfButton}" Padding="10,5"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Row 1: 8 Category Switcher -->
+                <WrapPanel Grid.Row="1">
+                    <RadioButton Content="🛡️ Варфрейм" GroupName="BuilderCat" IsChecked="{Binding IsCatWarframe, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Варфрейм"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="🔫 Оружие" GroupName="BuilderCat" IsChecked="{Binding IsCatWeapon, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Оружие"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="👁️ Усилитель" GroupName="BuilderCat" IsChecked="{Binding IsCatAmp, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Усилитель"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="🔮 Артефакты Тектолиста" GroupName="BuilderCat" IsChecked="{Binding IsCatArtifact, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Артефакты Тектолиста"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="🚀 Арчвинг" GroupName="BuilderCat" IsChecked="{Binding IsCatArchwing, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Арчвинг"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="🐾 Компаньон" GroupName="BuilderCat" IsChecked="{Binding IsCatCompanion, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Компаньон"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="🤖 Некрамех" GroupName="BuilderCat" IsChecked="{Binding IsCatMech, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Некрамех"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                    <RadioButton Content="🛸 Рэйлджек" GroupName="BuilderCat" IsChecked="{Binding IsCatRailjack, Mode=OneWay}"
+                                 Command="{Binding SelectCategoryCommand}" CommandParameter="Рэйлджек"
+                                 Style="{StaticResource TargetPresetButton}" Margin="0,0,4,2"/>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============================================== -->
+        <!-- MAIN 3-COLUMN ARSENAL WORKSPACE                -->
+        <!-- ============================================== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.15*" MinWidth="325"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="1.15*" MinWidth="320"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="0.92*" MinWidth="260"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ========================================== -->
+            <!-- COLUMN 1: PRIMARY GEAR + ARSENAL MOD GRID  -->
+            <!-- ========================================== -->
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}"
+                    BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="9">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Primary Hero Preview + Search + Selector with Pictures -->
+                        <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderBright}"
+                                BorderThickness="1" CornerRadius="5" Padding="9" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="52"/>
+                                        <ColumnDefinition Width="9"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="50" Height="50" Background="#080D14"
+                                            BorderBrush="{StaticResource BrushBorderGold}" BorderThickness="1" CornerRadius="5">
+                                        <Image Source="{Binding SelectedPrimaryItem.IconBitmap}" Stretch="Uniform" Margin="2"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedPrimaryItem.Name}" FontSize="13.5" FontWeight="Bold"
+                                                   Foreground="{StaticResource BrushGold}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding SelectedPrimaryItem.SubCategory}" FontSize="9.5"
+                                                   Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding SelectedPrimaryItem.DispositionDots}" FontSize="9"
+                                                   Foreground="#C084FC" Visibility="{Binding IsCatWeapon, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="3" Background="#162233" BorderBrush="#2A3E57" BorderThickness="1"
+                                            CornerRadius="4" Padding="6,3" VerticalAlignment="Top"
+                                            Visibility="{Binding ShowPrimaryModGrid, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}">
+                                            <Run Text="Емк: " Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text="{Binding PrimaryCapacityDisplay, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </Border>
+                                </Grid>
+
+                                <Border Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="0,0,0,5">
+                                    <Grid>
+                                        <TextBox Text="{Binding PlatformSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                 Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushTextPrimary}" FontSize="10.5"/>
+                                        <TextBlock Text="Фильтр списка предметов..." Foreground="{StaticResource BrushTextMuted}" FontSize="9.5"
+                                                   IsHitTestVisible="False" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding PlatformSearchText}" Value="">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+
+                                <ComboBox ItemsSource="{Binding CategoryPlatforms}"
+                                          SelectedItem="{Binding SelectedPrimaryItem}"
+                                          ItemTemplate="{StaticResource PlatformComboItemTemplate}"
+                                          Style="{StaticResource DarkComboStyle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Warframe / Mech / Companion / Railjack / Archwing Ability & EHP Stats -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8"
+                                Visibility="{Binding IsPlatformMode, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="ХАРАКТЕРИСТИКИ ПЛАТФОРМЫ И ВЫЖИВАЕМОСТЬ" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,5"/>
+                                <UniformGrid Columns="2" Margin="0,0,0,4">
+                                    <Border Background="#251F10" BorderBrush="{StaticResource BrushGold}" BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="0,0,3,4">
+                                        <Grid>
+                                            <TextBlock Text="⚡ Сила:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
+                                            <TextBlock Text="{Binding WarframeStats.StrengthPercent, StringFormat='{}{0:F0}%'}" HorizontalAlignment="Right" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Background="#121A26" BorderBrush="#243247" BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="3,0,0,4">
+                                        <Grid>
+                                            <TextBlock Text="⏳ Длит.:" FontSize="10" Foreground="{StaticResource BrushTextSecondary}"/>
+                                            <TextBlock Text="{Binding WarframeStats.DurationPercent, StringFormat='{}{0:F0}%'}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Background="#121A26" BorderBrush="#243247" BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="0,0,3,4">
+                                        <Grid>
+                                            <TextBlock Text="🌀 Эффект.:" FontSize="10" Foreground="{StaticResource BrushTextSecondary}"/>
+                                            <TextBlock Text="{Binding WarframeStats.EfficiencyPercent, StringFormat='{}{0:F0}%'}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Background="#121A26" BorderBrush="#243247" BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="3,0,0,4">
+                                        <Grid>
+                                            <TextBlock Text="🎯 Зона:" FontSize="10" Foreground="{StaticResource BrushTextSecondary}"/>
+                                            <TextBlock Text="{Binding WarframeStats.RangePercent, StringFormat='{}{0:F0}%'}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                        </Grid>
+                                    </Border>
+                                </UniformGrid>
+
+                                <UniformGrid Columns="4">
+                                    <StackPanel>
+                                        <TextBlock Text="HP" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding WarframeStats.Health}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushHealthRed}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Щит" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding WarframeStats.Shield}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushShieldBlue}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Броня" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding WarframeStats.Armor}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushArmorAmber}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="EHP" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding WarframeStats.EffectiveHp, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushSuccessGreen}"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Warframe Helminth + Archon Shards with PNG Crystal Icons -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8"
+                                Visibility="{Binding IsWarframeCategory, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="🧬 ГЕЛЬМИНТ И ОСКОЛКИ АРХОНТА (5/5)" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding HelminthChoices}"
+                                          SelectedItem="{Binding SelectedHelminth}"
+                                          DisplayMemberPath="Name"
+                                          Style="{StaticResource DarkComboStyle}" Margin="0,0,0,6"/>
+
+                                <ItemsControl ItemsSource="{Binding ArchonShards}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,1.5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0"
+                                                        Command="{Binding DataContext.CycleShardOptionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="#101722" BorderBrush="#223044" BorderThickness="1"
+                                                        Padding="6,3" HorizontalContentAlignment="Left" Cursor="Hand"
+                                                        ToolTip="Нажмите для смены типа осколка Архонта">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Grid Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                            <Ellipse Width="10" Height="10" Fill="{Binding Selected.ColorHex}"
+                                                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <Ellipse.Style>
+                                                                    <Style TargetType="Ellipse">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Selected.HasLoadedIcon}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Ellipse.Style>
+                                                            </Ellipse>
+                                                            <Image Source="{Binding Selected.IconBitmap}" Stretch="Uniform"
+                                                                   Visibility="{Binding Selected.HasLoadedIcon, Converter={StaticResource BoolToVis}}"/>
+                                                        </Grid>
+                                                        <TextBlock Text="{Binding SummaryText}" FontSize="10" Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Grid.Column="1" Content="Тау" Margin="4,0,0,0" Padding="6,2" FontSize="9"
+                                                        Command="{Binding DataContext.ToggleShardTauCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Cursor="Hand" ToolTip="Переключить Тау-кованый (+50% бонус)">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource PillButton}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTauforged}" Value="True">
+                                                                    <Setter Property="Background" Value="#382510"/>
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource BrushGold}"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Modular Operator Amp Scaffold + Brace (HIDDEN for Sirocco!) -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8"
+                                Visibility="{Binding IsModularAmp, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="👁️ ПОДЛОЖКА И ФИКСАТОР УСИЛИТЕЛЯ" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding AmpScaffoldChoices}" SelectedItem="{Binding SelectedAmpScaffold}"
+                                          DisplayMemberPath="Name" Style="{StaticResource DarkComboStyle}" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding AmpBraceChoices}" SelectedItem="{Binding SelectedAmpBrace}"
+                                          DisplayMemberPath="Name" Style="{StaticResource DarkComboStyle}" Margin="0,0,0,5"/>
+                                <CheckBox Content="Считать альт-огонь подложки (Эйдолоны / Propa)" IsChecked="{Binding UseAmpScaffoldAltFire}"
+                                          FontSize="9.5" Foreground="{StaticResource BrushCyan}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2 Primary Arcanes (Warframe OR Operator Amp — only here, never duplicated!) -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8"
+                                Visibility="{Binding HasPrimaryArcanes, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding ActivePrimaryArcaneHeader}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding PrimaryArcaneChoices}" SelectedItem="{Binding SelectedPrimaryArcane1}"
+                                          ItemTemplate="{StaticResource ArcaneComboItemTemplate}" Style="{StaticResource DarkComboStyle}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding PrimaryArcaneChoices}" SelectedItem="{Binding SelectedPrimaryArcane2}"
+                                          ItemTemplate="{StaticResource ArcaneComboItemTemplate}" Style="{StaticResource DarkComboStyle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 1 Weapon / Tektolyst Artifact Arcane (ONLY when standalone Оружие or Артефакты Тектолиста!) -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8"
+                                Visibility="{Binding HasWeaponArcaneInPrimary, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="💎 МИСТИФИКАТОР (1 СЛОТ)" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding WeaponArcaneChoices}" SelectedItem="{Binding SelectedWeaponArcane}"
+                                          ItemTemplate="{StaticResource ArcaneComboItemTemplate}" Style="{StaticResource DarkComboStyle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- In-Game Arsenal Layout Mod Grid (HIDDEN for Усилитель / Сирокко!) -->
+                        <StackPanel Visibility="{Binding ShowPrimaryModGrid, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding ActivePrimaryModGridTitle}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="2,0,0,5"/>
+
+                            <!-- Top Center Row: Aura / Stance + Exilus -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                <Grid Width="135" Visibility="{Binding ShowPrimaryAuraSlot, Converter={StaticResource BoolToVis}}">
+                                    <ContentControl Content="{Binding PrimaryTopSlot}" ContentTemplate="{StaticResource ArsenalPrimaryModCardTemplate}"/>
+                                </Grid>
+                                <Grid Width="135" Visibility="{Binding ShowPrimaryExilusSlot, Converter={StaticResource BoolToVis}}">
+                                    <ContentControl Content="{Binding PrimaryExilusSlot}" ContentTemplate="{StaticResource ArsenalPrimaryModCardTemplate}"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Main 4x2 Arsenal Mod Grid (or 5 Antique Mod slots for Artifacts) -->
+                            <ItemsControl ItemsSource="{Binding PrimaryMainSlots}" ItemTemplate="{StaticResource ArsenalPrimaryModCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="4"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- ========================================== -->
+            <!-- COLUMN 2: LINKED WEAPON & DPS STATS        -->
+            <!-- ========================================== -->
+            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}"
+                    BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="9">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Synergy Link Banner (Platform Modes) -->
+                        <Border Background="#211A0B" BorderBrush="{StaticResource BrushGold}" BorderThickness="1.2"
+                                CornerRadius="5" Padding="8" Margin="0,0,0,8"
+                                Visibility="{Binding IsPlatformMode, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="🔗 СВЯЗЬ БИЛДОВ (ФРЕЙМ / ПЛАТФОРМА → ОРУЖИЕ)" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
+                                <TextBlock Text="{Binding WarframeStats.SynergySummaryText}" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushCyan}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Active / Linked Weapon Selector Card with Image + Search -->
+                        <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderBright}"
+                                BorderThickness="1" CornerRadius="5" Padding="9" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="46"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="44" Height="44" Background="#080D14"
+                                            BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="4">
+                                        <Image Source="{Binding ActiveWeaponItem.IconBitmap}" Stretch="Uniform" Margin="2"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ActiveWeaponTitle}" FontSize="12.5" FontWeight="Bold"
+                                                   Foreground="{StaticResource BrushGold}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ActiveWeaponSubTitle}" FontSize="9" Foreground="{StaticResource BrushTextMuted}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ActiveWeaponItem.DispositionDots}" FontSize="8.5" Foreground="#C084FC"
+                                                   Visibility="{Binding HasLinkedWeapon, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="3" Background="#162233" BorderBrush="#2A3E57" BorderThickness="1"
+                                            CornerRadius="4" Padding="6,3" VerticalAlignment="Top"
+                                            Visibility="{Binding ShowPrimaryModGrid, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding WeaponStats.CapacityDisplay}" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Search + Linked Weapon Dropdown (Any Exalted OR Normal Primary/Secondary/Melee!) -->
+                                <StackPanel Visibility="{Binding IsPlatformMode, Converter={StaticResource BoolToVis}}" Margin="0,7,0,0">
+                                    <StackPanel Visibility="{Binding HasLinkedWeaponCandidates, Converter={StaticResource BoolToVis}}">
+                                    <Border Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="0,0,0,5">
+                                        <Grid>
+                                            <TextBox Text="{Binding LinkedWeaponSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushTextPrimary}" FontSize="10.5"/>
+                                            <TextBlock Text="Поиск оружия для связи (Торид, Экзальт...)" Foreground="{StaticResource BrushTextMuted}" FontSize="9.5"
+                                                       IsHitTestVisible="False" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LinkedWeaponSearchText}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+
+                                    <ComboBox ItemsSource="{Binding FilteredLinkedWeaponChoices}" SelectedItem="{Binding SelectedSecondaryWeapon}"
+                                              ItemTemplate="{StaticResource PlatformComboItemTemplate}" Style="{StaticResource DarkComboStyle}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Active Riven Mod Card (when injected from Market & Riven Grader) -->
+                        <Border Background="#181229" BorderBrush="#A855F7"
+                                BorderThickness="1" CornerRadius="5" Padding="9,7" Margin="0,0,0,8"
+                                Visibility="{Binding HasActiveRiven, Converter={StaticResource BoolToVis}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Background="#2E1065" CornerRadius="3" Padding="5,1" Margin="0,0,6,0">
+                                            <TextBlock Text="🎲 МОД РАЗЛОМА" FontSize="8" FontWeight="ExtraBold" Foreground="#D8B4FE"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding ActiveRiven.WeaponName}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding ActiveRiven.Summary}" FontSize="9.5" Foreground="#C084FC" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="✕ Снять" Command="{Binding ClearActiveRivenCommand}"
+                                        Background="#271A40" BorderBrush="#7E22CE" BorderThickness="1"
+                                        Foreground="#E9D5FF" FontSize="9" FontWeight="SemiBold"
+                                        Padding="7,3" VerticalAlignment="Center" Cursor="Hand"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Incarnon Evolutions Bar (visible when active weapon supports Incarnon Genesis) -->
+                        <Border Background="#111C28" BorderBrush="#25405A" BorderThickness="1" CornerRadius="5" Padding="9,7" Margin="0,0,0,8"
+                                Visibility="{Binding IsActiveWeaponIncarnonCapable, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="⚡ ЭВОЛЮЦИИ ИНКАРНОНА" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushCyan}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding IncarnonProfileChoices}" SelectedItem="{Binding SelectedIncarnonProfile}"
+                                          DisplayMemberPath="Label" Style="{StaticResource DarkComboStyle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Computed Weapon Stats & Element Breakdown -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="РАСЧЁТНЫЕ ХАРАКТЕРИСТИКИ" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <Border Grid.Column="1" Background="#1A2636" CornerRadius="3" Padding="5,1">
+                                        <TextBlock Text="{Binding WeaponStats.CritTierLabel}" FontSize="8" FontWeight="Bold" Foreground="{Binding WeaponStats.CritTierColor}"/>
+                                    </Border>
+                                </Grid>
+
+                                <UniformGrid Columns="2" Margin="0,0,0,6">
+                                    <StackPanel Margin="0,2">
+                                        <TextBlock Text="Урон за выстрел:" FontSize="9" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding WeaponStats.TotalDamagePerShot, StringFormat='{}{0:N0}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="6,2,0,2">
+                                        <TextBlock Text="Мультивыстрел / Скоростр.:" FontSize="9" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushCyan}">
+                                            <Run Text="{Binding WeaponStats.EffectiveMultishot, Mode=OneWay, StringFormat='{}{0:F1}×'}"/>
+                                            <Run Text=" • "/>
+                                            <Run Text="{Binding WeaponStats.EffectiveFireRate, Mode=OneWay, StringFormat='{}{0:F1}/с'}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,2">
+                                        <TextBlock Text="Крит. шанс / Множитель:" FontSize="9" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock FontSize="11" FontWeight="Bold" Foreground="{Binding WeaponStats.CritTierColor}">
+                                            <Run Text="{Binding WeaponStats.CritChancePercent, Mode=OneWay, StringFormat='{}{0:F1}%'}"/>
+                                            <Run Text=" / "/>
+                                            <Run Text="{Binding WeaponStats.CritMultiplier, Mode=OneWay, StringFormat='{}{0:F1}x'}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Margin="6,2,0,2">
+                                        <TextBlock Text="Статус / Событий в сек:" FontSize="9" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushSuccessGreen}">
+                                            <Run Text="{Binding WeaponStats.StatusChancePercent, Mode=OneWay, StringFormat='{}{0:F1}%'}"/>
+                                            <Run Text=" ("/>
+                                            <Run Text="{Binding WeaponStats.StatusPerSecond, Mode=OneWay, StringFormat='{}{0:F1}/с'}"/>
+                                            <Run Text=")"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </UniformGrid>
+
+                                <Separator Background="{StaticResource BrushBorderSubtle}" Margin="0,4"/>
+                                <TextBlock Text="КОМБИНАЦИИ СТИХИЙ И РАСПРЕДЕЛЕНИЕ УРОНА" FontSize="8" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,4"/>
+
+                                <ItemsControl ItemsSource="{Binding WeaponStats.Elements}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,2.5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" FontSize="10" Foreground="{Binding ColorHex}" FontWeight="SemiBold">
+                                                        <Run Text="{Binding Icon, Mode=OneWay}"/>
+                                                        <Run Text=" "/>
+                                                        <Run Text="{Binding Name, Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Grid.Column="1" Text="{Binding SharePercent, StringFormat='({0:F0}%)'}" FontSize="9" Foreground="{StaticResource BrushTextMuted}" Margin="6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat='{}{0:N0}'}" FontSize="10" FontWeight="Bold" Foreground="{Binding ColorHex}"/>
+                                                </Grid>
+                                                <ProgressBar Minimum="0" Maximum="100" Value="{Binding SharePercent, Mode=OneWay}"
+                                                             Height="3" Margin="0,2,0,0" BorderThickness="0"
+                                                             Background="#101827" Foreground="{Binding ColorHex}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Linked Weapon Arcane (ONLY in Platform Mode with a Linked Weapon!) -->
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="9" Margin="0,0,0,8"
+                                Visibility="{Binding HasWeaponArcaneInSecondary, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="💎 МИСТИФИКАТОР СВЯЗАННОГО ОРУЖИЯ" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding WeaponArcaneChoices}" SelectedItem="{Binding SelectedWeaponArcane}"
+                                          ItemTemplate="{StaticResource ArcaneComboItemTemplate}" Style="{StaticResource DarkComboStyle}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Linked Weapon Arsenal Mod Grid (Platform Mode only) -->
+                        <StackPanel Visibility="{Binding HasLinkedWeapon, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="МОДЫ СВЯЗАННОГО ОРУЖИЯ (АРСЕНАЛ 4×2)" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="2,0,0,5"/>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                <Grid Width="135" Visibility="{Binding ShowSecondaryStanceSlot, Converter={StaticResource BoolToVis}}">
+                                    <ContentControl Content="{Binding SecondaryTopSlot}" ContentTemplate="{StaticResource ArsenalSecondaryModCardTemplate}"/>
+                                </Grid>
+                                <Grid Width="135" Visibility="{Binding ShowSecondaryExilusSlot, Converter={StaticResource BoolToVis}}">
+                                    <ContentControl Content="{Binding SecondaryExilusSlot}" ContentTemplate="{StaticResource ArsenalSecondaryModCardTemplate}"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <ItemsControl ItemsSource="{Binding SecondaryMainSlots}" ItemTemplate="{StaticResource ArsenalSecondaryModCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="4"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- ========================================== -->
+            <!-- COLUMN 3: COMBAT SIMULATOR & SAVED BUILDS  -->
+            <!-- ========================================== -->
+            <Border Grid.Column="4" Background="{StaticResource BrushBgSurface}"
+                    BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="🎯 СИМУЛЯТОР БОЯ (DAMAGE 3.0)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="Учитывает слабости фракций, моды Погибели, Щиты (Токсин/Магнит), Броню и Боссов:" FontSize="9" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,2,0,8"/>
+
+                        <!-- Enemy Faction Selector -->
+                        <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1" CornerRadius="5" Padding="8" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="ФРАКЦИЯ ПРОТИВНИКА" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding FactionChoices}" SelectedItem="{Binding SelectedFaction}"
+                                          DisplayMemberPath="Name" Style="{StaticResource DarkComboStyle}"/>
+                                <TextBlock Text="{Binding SelectedFaction.WeaknessHint}" FontSize="9" Foreground="{StaticResource BrushCyan}"
+                                           TextWrapping="Wrap" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 7 Target & Boss Presets -->
+                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <RadioButton Content="Обычный 100" GroupName="TargetGroup" IsChecked="{Binding IsTargetNormal, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.Normal}" Margin="0,0,4,4"/>
+                            <RadioButton Content="★ SP 225" GroupName="TargetGroup" IsChecked="{Binding IsTargetSteelPath, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.SteelPath}" Margin="0,0,4,4"/>
+                            <RadioButton Content="🛡 Эксимус" GroupName="TargetGroup" IsChecked="{Binding IsTargetEximus, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.EximusOverguard}" Margin="0,0,4,4"/>
+                            <RadioButton Content="🔥 Аколит СП" GroupName="TargetGroup" IsChecked="{Binding IsTargetAcolyte, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.AcolyteBoss}" Margin="0,0,4,4"/>
+                            <RadioButton Content="💣 Демолист" GroupName="TargetGroup" IsChecked="{Binding IsTargetDemolyst, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.DemolystBoss}" Margin="0,0,4,4"/>
+                            <RadioButton Content="🔺 Архонт" GroupName="TargetGroup" IsChecked="{Binding IsTargetArchon, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.ArchonBoss}" Margin="0,0,4,4"/>
+                            <RadioButton Content="👾 Эйдолон" GroupName="TargetGroup" IsChecked="{Binding IsTargetEidolon, Mode=OneWay}"
+                                         Style="{StaticResource TargetPresetButton}" Command="{Binding SelectTargetPresetCommand}"
+                                         CommandParameter="{x:Static models:TargetPresetType.EidolonBoss}" Margin="0,0,4,4"/>
+                        </WrapPanel>
+
+                        <!-- Target Defense Pool Card: Health, Shields, Armor/DR, Overguard -->
+                        <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderBright}"
+                                BorderThickness="1" CornerRadius="5" Padding="9" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding SimResult.TargetName}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushGold}" TextWrapping="Wrap"/>
+                                        <TextBlock FontSize="8.5" Foreground="{StaticResource BrushCyan}" Margin="0,1,0,0">
+                                            <Run Text="{Binding SimResult.FactionName, Mode=OneWay}"/>
+                                            <Run Text=" • Множитель уязв.: "/>
+                                            <Run Text="{Binding SimResult.FactionWeaknessMultiplier, Mode=OneWay, StringFormat='{}×{0:F2}'}" FontWeight="Bold"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#1C2636" CornerRadius="3" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding SimResult.TargetLevel, StringFormat='{}Ур. {0}'}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
+                                    </Border>
+                                </Grid>
+
+                                <UniformGrid Columns="3">
+                                    <StackPanel Margin="0,2">
+                                        <TextBlock Text="❤️ Здоровье" FontSize="8.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding SimResult.Health, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushHealthRed}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="4,2">
+                                        <TextBlock Text="🛡 Щиты" FontSize="8.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock Text="{Binding SimResult.Shield, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushShieldBlue}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="4,2,0,2">
+                                        <TextBlock Text="⚙ Броня / DR" FontSize="8.5" Foreground="{StaticResource BrushTextMuted}"/>
+                                        <TextBlock FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushArmorAmber}">
+                                            <Run Text="{Binding SimResult.Armor, Mode=OneWay, StringFormat='{}{0:N0}'}"/>
+                                            <Run Text=" (" Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text="{Binding SimResult.DamageReductionPercent, Mode=OneWay, StringFormat='{}{0:F0}%'}"/>
+                                            <Run Text=")" Foreground="{StaticResource BrushTextMuted}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </UniformGrid>
+
+                                <Border Background="#0C1B2A" BorderBrush="{StaticResource BrushOverguard}" BorderThickness="1"
+                                        CornerRadius="4" Padding="7,4" Margin="0,6,0,0">
+                                    <Grid>
+                                        <TextBlock Text="💠 Overguard:" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushOverguard}"/>
+                                        <TextBlock Text="{Binding SimResult.Overguard, StringFormat='{}{0:N0}'}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushOverguard}"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Output DPS Metrics: Burst, Shield, Effective HP -->
+                        <UniformGrid Columns="3" Margin="0,0,0,8">
+                            <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="7,6" Margin="0,0,3,0">
+                                <StackPanel>
+                                    <TextBlock Text="BURST DPS" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding SimResult.BurstDps, StringFormat='{}{0:N0}'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="7,6" Margin="2,0">
+                                <StackPanel>
+                                    <TextBlock Text="ПО ЩИТАМ" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding SimResult.ShieldDps, StringFormat='{}{0:N0}'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource BrushShieldBlue}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="7,6" Margin="3,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="ПО БРОНЕ / HP" FontSize="8" Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock Text="{Binding SimResult.EffectiveDps, StringFormat='{}{0:N0}'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <Border Background="{StaticResource BrushBgCard}" CornerRadius="5" Padding="8" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="⏱ Время убийства (TTK):" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Background="#1C2A1E" BorderBrush="{StaticResource BrushSuccessGreen}" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                                    <TextBlock Text="{Binding SimResult.TimeToKillSeconds, StringFormat='{}{0:F2} сек'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource BrushSuccessGreen}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="#121820" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="5" Padding="8" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding SimResult.BreakdownNote}" FontSize="9.5" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap"/>
+                        </Border>
+
+                        <!-- Saved Builds Section -->
+                        <TextBlock Text="📂 СОХРАНЁННЫЕ БИЛДЫ ПРОФИЛЯ" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushGold}" Margin="0,0,0,5"/>
+                        <TextBlock Text="Нет сохранённых сборок — нажмите [💾 Сохранить] сверху." FontSize="9" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SavedBuilds.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ItemsControl ItemsSource="{Binding SavedBuilds}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="4" Padding="7,5" Margin="0,0,0,4">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding BuildName}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock FontSize="8" Foreground="{StaticResource BrushTextMuted}">
+                                                    <Run Text="{Binding Category, Mode=OneWay}"/>
+                                                    <Run Text=" • "/>
+                                                    <Run Text="{Binding SavedAt, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="Открыть" Command="{Binding DataContext.LoadSavedBuildCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" Style="{StaticResource PillButton}" FontSize="9" Padding="6,2" Margin="0,0,4,0"/>
+                                                <Button Content="🗑" Command="{Binding DataContext.DeleteSavedBuildCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushHealthRed}" Cursor="Hand" FontSize="10"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- ============================================== -->
+        <!-- FAST MODAL MOD PICKER OVERLAY WITH ARTWORK     -->
+        <!-- ============================================== -->
+        <Grid Grid.Row="0" Grid.RowSpan="2" Background="#B005080D"
+              Visibility="{Binding IsModPickerOpen, Converter={StaticResource BoolToVis}}">
+            <Border Background="#111824" BorderBrush="{StaticResource BrushCyan}" BorderThickness="1.5"
+                    CornerRadius="8" Width="660" Height="500" Padding="14"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding EditingSlotTitle}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushGold}" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="✕ Закрыть" Command="{Binding CloseModPickerCommand}" Style="{StaticResource PillButton}"/>
+                    </Grid>
+
+                    <Border Grid.Row="1" Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderBright}"
+                            BorderThickness="1" CornerRadius="5" Padding="9,6" Margin="0,0,0,8">
+                        <Grid>
+                            <TextBox Text="{Binding ModPickerSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
+                            <TextBlock Text="Поиск мода по названию или эффекту..." Foreground="{StaticResource BrushTextMuted}" FontSize="11"
+                                       IsHitTestVisible="False" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ModPickerSearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ModPickerResults}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.EquipModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Background="#152030" BorderBrush="#26364D" BorderThickness="1"
+                                            Margin="0,0,0,4" Padding="7,5" HorizontalContentAlignment="Stretch" Cursor="Hand">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="46"/>
+                                                            <ColumnDefinition Width="9"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="0" Width="44" Height="34" Background="#080D14"
+                                                                BorderBrush="{Binding RarityColor}" BorderThickness="1" CornerRadius="3">
+                                                            <Image Source="{Binding IconBitmap}" Stretch="UniformToFill" SnapsToDevicePixels="True"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Bold" Foreground="{Binding RarityColor}"/>
+                                                            <TextBlock Text="{Binding Description}" FontSize="9" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                            <Border Background="#1C2738" CornerRadius="3" Padding="6,2">
+                                                                <TextBlock FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushCyan}">
+                                                                    <Run Text="{Binding MaxDrain, Mode=OneWay}"/>
+                                                                    <Run Text=" "/>
+                                                                    <Run Text="{Binding PolarityGlyph, Mode=OneWay}"/>
+                                                                </TextBlock>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

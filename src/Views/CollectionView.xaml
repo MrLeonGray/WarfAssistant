@@ -1,0 +1,636 @@
+<UserControl x:Class="WarfAssistant.Views.CollectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ctrl="clr-namespace:WarfAssistant.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="850" d:DesignWidth="1150">
+    <UserControl.Resources>
+        <!-- Toggle/Deselect Primary Category Button Style (No "All" button) -->
+        <Style x:Key="CategoryChipStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,5,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CatBd" Background="#121926" BorderBrush="#243347" BorderThickness="1"
+                                CornerRadius="4" Padding="11,5">
+                            <TextBlock x:Name="CatTxt" Text="{TemplateBinding Content}" FontSize="11"
+                                       FontWeight="SemiBold" Foreground="#A8BAD0" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CatBd" Property="Background" Value="#192436"/>
+                                <Setter TargetName="CatBd" Property="BorderBrush" Value="{StaticResource BrushGold}"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="1">
+                                <Setter TargetName="CatBd" Property="Background" Value="#251F11"/>
+                                <Setter TargetName="CatBd" Property="BorderBrush" Value="{StaticResource BrushGold}"/>
+                                <Setter TargetName="CatTxt" Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
+                                <Setter TargetName="CatTxt" Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DrawerGroupBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="#0C121B"/>
+            <Setter Property="BorderBrush" Value="#213147"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="7,4,3,1"/>
+            <Setter Property="Margin" Value="0,0,8,4"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12,8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 0: Compact Mastery Banner -->
+            <RowDefinition Height="Auto"/> <!-- 1: Category Bar -->
+            <RowDefinition Height="Auto"/> <!-- 2: Sub-tabs + Search + Фильтры Button -->
+            <RowDefinition Height="Auto"/> <!-- 3: Collapsible AlecaFrame-style Фильтры Drawer -->
+            <RowDefinition Height="*"/>    <!-- 4: Virtualized Enlarged Card Grid -->
+        </Grid.RowDefinitions>
+
+        <!-- ======================================================= -->
+        <!-- 0. COMPACT MASTERY RANK BANNER & SYNC STATUS            -->
+        <!-- ======================================================= -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgCard}"
+                BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
+                CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- MR Badge -->
+                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="6" Background="#151E2C"
+                        BorderBrush="{StaticResource BrushGold}" BorderThickness="1.5" Margin="0,0,10,0">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="MR" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding MasterySummary.CurrentRankNumber}" FontSize="16" FontWeight="ExtraBold"
+                                   Foreground="{StaticResource BrushGold}" HorizontalAlignment="Center" Margin="0,-2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Title + Progress Bar -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <DockPanel LastChildFill="False" Margin="0,0,0,4">
+                        <TextBlock Text="{Binding MasterySummary.RankTitle}" FontSize="13.5" FontWeight="Bold"
+                                   Foreground="{StaticResource BrushTextPrimary}" DockPanel.Dock="Left"/>
+                        <TextBlock Text="{Binding MasterySummary.ProgressText}" FontSize="10.5"
+                                   Foreground="{StaticResource BrushGoldBright}" DockPanel.Dock="Right" VerticalAlignment="Bottom"/>
+                    </DockPanel>
+                    <Grid Height="7">
+                        <Border Background="#0B0F17" CornerRadius="3.5"/>
+                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding MasterySummary.ProgressPercent}"
+                                     Background="Transparent" Foreground="{StaticResource BrushGold}" BorderThickness="0"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Right Metrics & API Sync Button -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#101824" BorderBrush="#1F3042" BorderThickness="1" CornerRadius="5" Padding="9,4" Margin="0,0,6,0">
+                        <StackPanel>
+                            <TextBlock Text="ИНВЕНТАРЬ" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center"/>
+                            <TextBlock FontSize="12" FontWeight="Bold" Foreground="{StaticResource BrushSuccessGreen}" HorizontalAlignment="Center"
+                                       Text="{Binding MasterySummary.OwnedCount}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#101824" BorderBrush="#1F3042" BorderThickness="1" CornerRadius="5" Padding="9,4" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="В РАНГЕ" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center"/>
+                            <TextBlock FontSize="12" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" HorizontalAlignment="Center"
+                                       Text="{Binding MasterySummary.MasteredCount}"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Command="{Binding SyncCatalogCommand}" Cursor="Hand"
+                            ToolTip="Проверить обновления DE PublicExport (.lzma + browse.wf + warframestat)">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="#122133" BorderBrush="#264769" BorderThickness="1" CornerRadius="4" Padding="9,6">
+                                    <StackPanel>
+                                        <TextBlock Text="↻ Обновить API" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource BrushCyan}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SyncStatusText}" FontSize="8.5" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ======================================================= -->
+        <!-- 1. TOP CATEGORY BAR (CLICK/DESELECT - NO "ВСЕ" BUTTON)   -->
+        <!-- ======================================================= -->
+        <WrapPanel Grid.Row="1" Margin="0,0,0,4">
+            <Button Content="🛡 Варфреймы" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Варфреймы"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Варфреймы}"/>
+            <Button Content="🔫 Основное" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Основное"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Основное}"/>
+            <Button Content="🔫 Вторичное" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Вторичное"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Вторичное}"/>
+            <Button Content="⚔ Ближний бой" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Ближний бой"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Ближний бой'}"/>
+            <Button Content="🔩 Модульное" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Модульное"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Модульное}"/>
+            <Button Content="🚀 Арчвинг" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Арчвинг"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Арчвинг}"/>
+            <Button Content="🐾 Компаньоны" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Компаньоны"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Компаньоны}"/>
+            <Button Content="✨ Косметика" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Косметика"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Косметика}"/>
+            <Button Content="🗿 Убежище" Style="{StaticResource CategoryChipStyle}" Command="{Binding SelectCategoryCommand}" CommandParameter="Украшения Убежища"
+                    Tag="{Binding SelectedCategory, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Украшения Убежища'}"/>
+        </WrapPanel>
+
+        <!-- ======================================================= -->
+        <!-- 2. SUB-TABS (CLICK/DESELECT) + SEARCH + ФИЛЬТРЫ BUTTON  -->
+        <!-- ======================================================= -->
+        <Grid Grid.Row="2" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Dynamic Sub-Tabs (No "Все" tab, click again to deselect) -->
+            <ItemsControl Grid.Column="0" ItemsSource="{Binding SubTabs}" VerticalAlignment="Center" Margin="0,0,10,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding DataContext.SelectSubTabCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" Margin="0,0,4,3" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{Binding BackgroundBrush}" BorderBrush="{Binding BorderBrush}"
+                                            BorderThickness="1" CornerRadius="4" Padding="8,3.5">
+                                        <TextBlock Text="{Binding Title}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding ForegroundBrush}"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Right: Counter + Founders CheckBox + Search + Фильтры Toggle -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding FilteredCountSummary}" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}"
+                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                <!-- Compact Search Box -->
+                <Border Background="#0D131D" BorderBrush="#233247" BorderThickness="1" CornerRadius="5"
+                        Width="220" Height="28" Padding="8,0" Margin="0,0,6,0">
+                    <Grid>
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent" BorderThickness="0" Foreground="{StaticResource BrushTextPrimary}"
+                                 CaretBrush="{StaticResource BrushCyan}" FontSize="11.5" VerticalContentAlignment="Center" Padding="0,0,18,0"/>
+                        <TextBlock Text="Поиск RU / EN / источник..." FontSize="11" Foreground="#4E6075"
+                                   IsHitTestVisible="False" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SearchText}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Button Content="✕" Command="{Binding ClearSearchCommand}" HorizontalAlignment="Right"
+                                VerticalAlignment="Center" Background="Transparent" BorderThickness="0"
+                                Foreground="{StaticResource BrushTextMuted}" Cursor="Hand" FontSize="11" Padding="3,0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SearchText}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- AlecaFrame-style Фильтры Toggle Button -->
+                <Button Command="{Binding ToggleFiltersDrawerCommand}" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="BtnBd" CornerRadius="4" Padding="11,5" BorderThickness="1" Height="28">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#142030"/>
+                                        <Setter Property="BorderBrush" Value="#2D4361"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsFiltersExpanded}" Value="True">
+                                                <Setter Property="Background" Value="#1D3347"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource BrushCyan}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding FiltersButtonLabel}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock FontSize="10" Margin="5,0,0,0" Foreground="{StaticResource BrushCyan}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="▾"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFiltersExpanded}" Value="True">
+                                                        <Setter Property="Text" Value="▴"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- ======================================================= -->
+        <!-- 3. COLLAPSIBLE ФИЛЬТРЫ PANEL (NO "ВСЕ" + PERSISTED CHKBX)-->
+        <!-- ======================================================= -->
+        <Border Grid.Row="3" Background="#0F1622" BorderBrush="#263952" BorderThickness="1" CornerRadius="6"
+                Padding="12,9" Margin="0,0,0,8"
+                Visibility="{Binding IsFiltersExpanded, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Row 1: Separated Click/Deselect State Groups -->
+                <WrapPanel Grid.Row="0" Margin="0,0,0,5" VerticalAlignment="Center">
+                    <Border Style="{StaticResource DrawerGroupBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Инвентарь:" FontSize="10" FontWeight="SemiBold" Foreground="#7A8CA3" VerticalAlignment="Center" Margin="0,0,6,2"/>
+                            <Button Content="✓ В наличии" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetOwnedFilterCommand}" CommandParameter="В наличии"
+                                    Tag="{Binding OwnedFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='В наличии'}"/>
+                            <Button Content="Нет" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetOwnedFilterCommand}" CommandParameter="Не в наличии"
+                                    Tag="{Binding OwnedFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Не в наличии'}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource DrawerGroupBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Ранг:" FontSize="10" FontWeight="SemiBold" Foreground="#7A8CA3" VerticalAlignment="Center" Margin="0,0,6,2"/>
+                            <Button Content="★ В ранге" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetMasteredFilterCommand}" CommandParameter="В ранге"
+                                    Tag="{Binding MasteredFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='В ранге'}"/>
+                            <Button Content="☆ Не в ранге" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetMasteredFilterCommand}" CommandParameter="Не в ранге"
+                                    Tag="{Binding MasteredFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Не в ранге'}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource DrawerGroupBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Хранилище:" FontSize="10" FontWeight="SemiBold" Foreground="#7A8CA3" VerticalAlignment="Center" Margin="0,0,6,2"/>
+                            <Button Content="В хранилище" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetVaultedFilterCommand}" CommandParameter="В хранилище"
+                                    Tag="{Binding VaultedFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='В хранилище'}"/>
+                            <Button Content="Доступно" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetVaultedFilterCommand}" CommandParameter="Доступно"
+                                    Tag="{Binding VaultedFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Доступно}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource DrawerGroupBorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Вариант:" FontSize="10" FontWeight="SemiBold" Foreground="#7A8CA3" VerticalAlignment="Center" Margin="0,0,6,2"/>
+                            <Button Content="Prime" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetVariantFilterCommand}" CommandParameter="Prime"
+                                    Tag="{Binding VariantFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Prime}"/>
+                            <Button Content="Не-Prime" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetVariantFilterCommand}" CommandParameter="Не-Prime"
+                                    Tag="{Binding VariantFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Не-Prime'}"/>
+                            <Button Content="Кува/Догмат/Кода" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetVariantFilterCommand}" CommandParameter="Антагонист"
+                                    Tag="{Binding VariantFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Антагонист}"/>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- Row 2: Acquisition Sources + Persisted Founders Exclusion Checkbox + Reset -->
+                <DockPanel Grid.Row="1" LastChildFill="False">
+                    <Border DockPanel.Dock="Left" Style="{StaticResource DrawerGroupBorderStyle}" Margin="0">
+                        <WrapPanel VerticalAlignment="Center">
+                            <TextBlock Text="Источник:" FontSize="10" FontWeight="SemiBold" Foreground="#7A8CA3" VerticalAlignment="Center" Margin="0,0,6,2"/>
+                            <Button Content="Дроп / Квест" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetSourceFilterCommand}" CommandParameter="Квест/Дроп"
+                                    Tag="{Binding SourceFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Квест/Дроп'}"/>
+                            <Button Content="Магазин / Торговцы" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetSourceFilterCommand}" CommandParameter="Игр. валюта"
+                                    Tag="{Binding SourceFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Игр. валюта'}"/>
+                            <Button Content="Кузница" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetSourceFilterCommand}" CommandParameter="Кузница"
+                                    Tag="{Binding SourceFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Кузница}"/>
+                            <Button Content="Платина" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetSourceFilterCommand}" CommandParameter="Платина"
+                                    Tag="{Binding SourceFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter=Платина}"/>
+                            <Button Content="Корол. Айя" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetSourceFilterCommand}" CommandParameter="Корол. Айя"
+                                    Tag="{Binding SourceFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='Корол. Айя'}"/>
+                            <Button Content="За реал / Tennogen" Style="{StaticResource WarfFilterChipButton}" Command="{Binding SetSourceFilterCommand}" CommandParameter="За реал"
+                                    Tag="{Binding SourceFilter, Converter={x:Static ctrl:StringEqualsTagConverter.Instance}, ConverterParameter='За реал'}"/>
+                        </WrapPanel>
+                    </Border>
+
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <CheckBox Content="Не учитывать Основателей"
+                                  IsChecked="{Binding HideFoundersExclusive, Mode=TwoWay}"
+                                  FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}"
+                                  Margin="0,0,12,0" VerticalAlignment="Center"
+                                  ToolTip="Скрыть и исключить из расчёта ранга набор Основателей (Excalibur Prime, Lato Prime, Skana Prime). Выбор сохраняется между запусками."/>
+
+                        <Button Command="{Binding ResetFiltersCommand}" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="#1B222E" BorderBrush="#34445B" BorderThickness="1" CornerRadius="4" Padding="9,4">
+                                        <TextBlock Text="↺ Сбросить" FontSize="10.5" FontWeight="SemiBold" Foreground="#C8D3E0"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+        </Border>
+
+        <!-- ======================================================= -->
+        <!-- 4. VIRTUALIZED ENLARGED ALECAFRAME-STYLE CARD GRID      -->
+        <!--    Cards enlarged ~50% (350x194 in 360x204 slot)        -->
+        <!-- ======================================================= -->
+        <ListBox Grid.Row="4"
+                 ItemsSource="{Binding DisplayItems}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"
+                 VirtualizingPanel.ScrollUnit="Pixel"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.CanContentScroll="True"
+                 FocusVisualStyle="{x:Null}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ctrl:VirtualizingWrapPanel ItemWidth="360" ItemHeight="204"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <!-- AlecaFrame Proportions Card (350x194 inside 360x204 slot) -->
+                    <Border x:Name="CardRoot" Width="350" Height="194" Margin="5" CornerRadius="8" Padding="12,10"
+                            BorderThickness="1" ToolTip="{Binding CardToolTip}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#141A24"/>
+                                <Setter Property="BorderBrush" Value="#253142"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsOwned}" Value="True">
+                                        <Setter Property="Background" Value="#182420"/>
+                                        <Setter Property="BorderBrush" Value="#2D624B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsMastered}" Value="True">
+                                        <Setter Property="Background" Value="#2A251A"/>
+                                        <Setter Property="BorderBrush" Value="#75633E"/>
+                                    </DataTrigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="BorderBrush" Value="{StaticResource BrushCyan}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="24"/> <!-- Top: Star + Title + Vaulted Pill + Dependency Icon -->
+                                <RowDefinition Height="*"/>  <!-- Center: Big Artwork Left + Component Tiles Right -->
+                                <RowDefinition Height="1"/>  <!-- Subtle Divider -->
+                                <RowDefinition Height="30"/> <!-- Bottom: Action Badges + Incarnon + MR -->
+                            </Grid.RowDefinitions>
+
+                            <!-- TOP BAR -->
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock FontSize="12.5" Margin="0,0,6,0" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="☆"/>
+                                                <Setter Property="Foreground" Value="#7A8EA6"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMastered}" Value="True">
+                                                        <Setter Property="Text" Value="★"/>
+                                                        <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="Bold"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#F1F5F9"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPrime}" Value="True">
+                                                        <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                                    <!-- High-Contrast Vaulted Badge (Never Dark-on-Dark!) -->
+                                    <Border Background="#3B1F0A" BorderBrush="#F59E0B" BorderThickness="1" CornerRadius="3"
+                                            Padding="5,1" Margin="0,0,5,0" ToolTip="В Прайм-Хранилище (Vaulted)"
+                                            Visibility="{Binding IsVaulted, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="ХРАНИЛИЩЕ" FontSize="7.5" FontWeight="Bold" Foreground="#FDE68A"/>
+                                    </Border>
+                                    <TextBlock Text="⑂" FontSize="13" FontWeight="Bold" Foreground="#C084FC" ToolTip="{Binding IngredientToolTip}"
+                                               Visibility="{Binding IsUsedAsIngredient, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- MIDDLE: LARGE ARTWORK LEFT + COMPONENT TILES OR CONCRETE VENDOR SOURCE RIGHT -->
+                            <Grid Grid.Row="1" Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="114"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Large Crisp Artwork -->
+                                <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding IconGlyph}" FontSize="34" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Visibility="{Binding HasLoadedThumbnail, Converter={StaticResource InverseBoolToVis}}"/>
+                                    <Image Source="{Binding ThumbnailBitmap}" MaxWidth="106" MaxHeight="104" Stretch="Uniform"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Grid>
+
+                                <!-- Right Side: Enlarged 2x2 Component Tiles -->
+                                <Grid Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <ItemsControl ItemsSource="{Binding CompactComponents}"
+                                                  Visibility="{Binding HasComponents, Converter={StaticResource BoolToVis}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="52" Height="48" Background="#0F141D" BorderBrush="#2C3B50"
+                                                        BorderThickness="1" CornerRadius="5" Margin="3" ToolTip="{Binding Name}">
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding IconGlyph}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="{Binding HasLoadedIcon, Converter={StaticResource InverseBoolToVis}}"/>
+                                                        <Image Source="{Binding IconBitmap}" Width="36" Height="36" Stretch="Uniform"
+                                                               RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Border Background="#CC06090E" CornerRadius="2" Padding="4,0"
+                                                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,2,2">
+                                                            <TextBlock Text="{Binding Count}" FontSize="8.5" FontWeight="Bold" Foreground="#F1F5F9"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Concrete Vendor / Drop Source Pill when no Blueprint Components -->
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Visibility="{Binding HasComponents, Converter={StaticResource InverseBoolToVis}}">
+                                        <Border Background="#111824" BorderBrush="{Binding SourceBadgeColor}" BorderThickness="1"
+                                                CornerRadius="5" Padding="9,5" Margin="0,0,0,5" HorizontalAlignment="Center" MaxWidth="195">
+                                            <TextBlock Text="{Binding SourceBadgeText}" FontSize="10" FontWeight="Bold"
+                                                       Foreground="{Binding SourceBadgeColor}" TextAlignment="Center" TextWrapping="Wrap"/>
+                                        </Border>
+                                        <Border Background="{Binding BadgeColor}" CornerRadius="3" Padding="6,1.5" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding SubCategory}" FontSize="8.5" FontWeight="Bold" Foreground="#090C12"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+
+                            <!-- DIVIDER -->
+                            <Border Grid.Row="2" Background="#3B3830" Opacity="0.65"/>
+
+                            <!-- BOTTOM ICON STRIP (Unclipped Incarnon Pill + Crisp Actions + MR) -->
+                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Mastery Laurel -->
+                                    <Button Command="{Binding DataContext.ToggleMasteredCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand"
+                                            ToolTip="{Binding MasteredToolTip}"
+                                            Visibility="{Binding CanBeMastered, Converter={StaticResource BoolToVis}}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{Binding MasteredLaurelBackground}" BorderBrush="{Binding MasteredLaurelBorder}"
+                                                        BorderThickness="1" CornerRadius="4" Padding="6,3">
+                                                    <TextBlock Text="🏆" FontSize="11" Foreground="{Binding MasteredLaurelForeground}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!-- Helminth Subsume -->
+                                    <Button Command="{Binding DataContext.ToggleSubsumedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand"
+                                            ToolTip="{Binding SubsumedToolTip}"
+                                            Visibility="{Binding CanBeSubsumed, Converter={StaticResource BoolToVis}}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{Binding SubsumedBackground}" BorderBrush="{Binding SubsumedBorder}"
+                                                        BorderThickness="1" CornerRadius="4" Padding="6,3">
+                                                    <TextBlock Text="❀" FontSize="11.5" FontWeight="Bold" Foreground="{Binding SubsumedForeground}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!-- Owned Pill -->
+                                    <Button Command="{Binding DataContext.ToggleOwnedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{Binding OwnedButtonBackground}" BorderBrush="{Binding OwnedButtonBorder}"
+                                                        BorderThickness="1" CornerRadius="4" Padding="7,3">
+                                                    <TextBlock Text="{Binding OwnedButtonText}" FontSize="9.5" FontWeight="Bold"
+                                                               Foreground="{Binding OwnedButtonForeground}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!-- Quick Craft Toggle -->
+                                    <Button Command="{Binding DataContext.ToggleCraftQueueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand"
+                                            ToolTip="{Binding CraftButtonToolTip}"
+                                            Visibility="{Binding CanBeCrafted, Converter={StaticResource BoolToVis}}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{Binding CraftButtonBackground}" BorderBrush="{Binding CraftButtonBorder}"
+                                                        BorderThickness="1" CornerRadius="4" Padding="6,3">
+                                                    <TextBlock Text="🛠" FontSize="10" Foreground="{Binding CraftButtonForeground}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!-- Unclipped Incarnon Chip -->
+                                    <Button Command="{Binding DataContext.ToggleIncarnonCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Cursor="Hand"
+                                            ToolTip="{Binding IncarnonToolTip}"
+                                            Visibility="{Binding CanHaveIncarnon, Converter={StaticResource BoolToVis}}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{Binding IncarnonBackground}" BorderBrush="{Binding IncarnonBorder}"
+                                                        BorderThickness="1" CornerRadius="4" Padding="6,2.5">
+                                                    <TextBlock Text="⚡ Инкарнон" FontSize="8.5" FontWeight="Bold" Foreground="{Binding IncarnonForeground}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1" Text="{Binding BottomRightTag}" FontSize="9.5" FontWeight="Bold"
+                                           Foreground="#A8B8CC" VerticalAlignment="Center" MaxWidth="95" TextTrimming="CharacterEllipsis"
+                                           Visibility="{Binding HasBottomRightTag, Converter={StaticResource BoolToVis}}"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>
