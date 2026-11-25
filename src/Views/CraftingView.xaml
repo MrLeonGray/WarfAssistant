@@ -167,8 +167,7 @@
                         </Border>
 
                         <Button Content="🗑 Очистить" Command="{Binding ClearCraftQueueCommand}"
-                                Style="{StaticResource PillButton}" Foreground="{StaticResource BrushHealthRed}"
-                                ToolTip="Удалить все предметы из очереди крафта"/>
+                                Style="{StaticResource PillButton}" Foreground="{StaticResource BrushHealthRed}"/>
                     </StackPanel>
                 </Grid>
             </Grid>
@@ -489,8 +488,7 @@
                                                                  Foreground="{StaticResource BrushGold}" Background="#0D131D"
                                                                  BorderBrush="#2C3C54" BorderThickness="1"
                                                                  TextAlignment="Right" VerticalContentAlignment="Center"
-                                                                 Padding="3,0" Margin="2,0"
-                                                                 ToolTip="Введите текущее количество в инвентаре (Enter для мгновенного применения)"/>
+                                                                 Padding="3,0" Margin="2,0"/>
                                                         <Button Content="+" Width="17" Height="18" FontSize="10" FontWeight="Bold"
                                                                 Command="{Binding DataContext.StepResourceUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"

@@ -78,7 +78,7 @@
 
         <!-- Platform / Weapon Item Template with Artwork -->
         <DataTemplate x:Key="PlatformComboItemTemplate" DataType="{x:Type models:BuilderPlatformItem}">
-            <Grid ToolTip="{Binding DisplayHeader}">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="28"/>
                     <ColumnDefinition Width="7"/>
@@ -517,8 +517,7 @@
                                                         Command="{Binding DataContext.CycleShardOptionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}"
                                                         Background="#101722" BorderBrush="#223044" BorderThickness="1"
-                                                        Padding="6,3" HorizontalContentAlignment="Left" Cursor="Hand"
-                                                        ToolTip="Нажмите для смены типа осколка Архонта">
+                                                        Padding="6,3" HorizontalContentAlignment="Left" Cursor="Hand">
                                                     <StackPanel Orientation="Horizontal">
                                                         <Grid Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center">
                                                             <Ellipse Width="10" Height="10" Fill="{Binding Selected.ColorHex}"
@@ -543,7 +542,7 @@
                                                 <Button Grid.Column="1" Content="Тау" Margin="4,0,0,0" Padding="6,2" FontSize="9"
                                                         Command="{Binding DataContext.ToggleShardTauCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}"
-                                                        Cursor="Hand" ToolTip="Переключить Тау-кованый (+50% бонус)">
+                                                        Cursor="Hand" ToolTip="+50% к бонусу осколка">
                                                     <Button.Style>
                                                         <Style TargetType="Button" BasedOn="{StaticResource PillButton}">
                                                             <Style.Triggers>

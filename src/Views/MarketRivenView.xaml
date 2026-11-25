@@ -487,13 +487,11 @@
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                     <TextBox Text="{Binding RivenWeaponSearchText, UpdateSourceTrigger=PropertyChanged}"
                                              Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1"
-                                             Foreground="{StaticResource BrushTextPrimary}" FontSize="11" Padding="6,4" Margin="0,0,0,5"
-                                             ToolTip="Поиск оружия для мода Разлома"/>
+                                             Foreground="{StaticResource BrushTextPrimary}" FontSize="11" Padding="6,4" Margin="0,0,0,5"/>
                                     <ComboBox ItemsSource="{Binding FilteredRivenWeapons}" SelectedItem="{Binding SelectedRivenWeapon}"
                                               DisplayMemberPath="DisplayName" Style="{StaticResource DarkCombo}"/>
                                     <ComboBox ItemsSource="{Binding RivenVariants}" SelectedItem="{Binding SelectedRivenVariant}"
-                                              DisplayMemberPath="DisplayName" Style="{StaticResource DarkCombo}" Margin="0,4,0,0"
-                                              ToolTip="Выберите вариант оружия (Prime / Kuva / Vandal и т.д.) для точной синергии"/>
+                                              DisplayMemberPath="DisplayName" Style="{StaticResource DarkCombo}" Margin="0,4,0,0"/>
                                     <Grid Margin="0,6,0,0">
                                         <TextBlock Text="Синергия Разлома:" FontSize="10" Foreground="{StaticResource BrushTextMuted}"/>
                                         <TextBlock Text="{Binding ActiveRivenDispositionText}" HorizontalAlignment="Right" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>

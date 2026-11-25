@@ -459,6 +459,24 @@ namespace WarfAssistant.ViewModels
         private static string ToggleFilter(string current, string clicked) =>
             string.Equals(current, clicked, StringComparison.OrdinalIgnoreCase) ? "All" : clicked;
 
+        private static string NormalizeAllCapsTitle(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return value;
+            bool hasLetter = false;
+            bool allUpper = true;
+            foreach (char ch in value)
+            {
+                if (char.IsLetter(ch))
+                {
+                    hasLetter = true;
+                    if (!char.IsUpper(ch)) { allUpper = false; break; }
+                }
+            }
+            if (!hasLetter || !allUpper) return value;
+            string lower = value.ToLowerInvariant();
+            return char.ToUpperInvariant(lower[0]) + lower.Substring(1);
+        }
+
         private void SaveNotificationPreferences()
         {
             var enabled = WorldCycles.Where(w => w.NotifyEnabled).Select(w => w.Id).ToList();
@@ -572,7 +590,7 @@ namespace WarfAssistant.ViewModels
                         int cnt = r.TryGetProperty("count", out var ct) ? ct.GetInt32() : 1;
                         bool isPrest = r.TryGetProperty("isPrestige", out var ip) && ip.ValueKind == JsonValueKind.True;
                         if (isPrest || rank > 30) continue;
-                        string rName = WorldStateService.GetStr(r, "name");
+                        string rName = NormalizeAllCapsTitle(WorldStateService.GetStr(r, "name"));
                         string icon = WorldStateService.GetStr(r, "icon");
                         Nightwave.RankRewards.Add(new NightwaveRewardRank
                         {

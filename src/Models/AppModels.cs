@@ -781,6 +781,7 @@ namespace WarfAssistant.Models
         public string RankBadge => IsPrestige ? $"П{Rank}" : $"УР. {Rank}";
         public string CountBadge => Count > 1 ? $"×{Count}" : string.Empty;
         public bool HasCountBadge => Count > 1;
+        public double NameFontSize => RewardName.Length >= 36 ? 8.0 : (RewardName.Length >= 30 ? 8.5 : 9.5);
         public bool HasLoadedIcon => _iconBitmap != null;
         public BitmapImage? IconBitmap => IconLoaderHelper.GetOrRequest(ImageUrl, ref _iconBitmap, bmp =>
         {
@@ -834,6 +835,7 @@ namespace WarfAssistant.Models
                     _expiryUtc = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(HasUncertainExpiry));
+                    OnPropertyChanged(nameof(ShowExpiryTimer));
                     OnPropertyChanged(nameof(SeasonExpiryHint));
                 }
             }
@@ -841,8 +843,17 @@ namespace WarfAssistant.Models
 
         /// <summary>
         /// DE sets a far-future placeholder end date in SeasonInfo.Expiry until the official end date is announced.
+        /// Show the countdown only when 14 days or less remain (when the official end date is announced).
         /// </summary>
         public bool HasUncertainExpiry => _expiryUtc > DateTime.UtcNow.AddDays(45);
+        public bool ShowExpiryTimer
+        {
+            get
+            {
+                var rem = _expiryUtc - DateTime.UtcNow;
+                return rem > TimeSpan.Zero && rem <= TimeSpan.FromDays(14);
+            }
+        }
         public string SeasonExpiryHint => HasUncertainExpiry
             ? $"Серверная дата-заглушка DE API ({_expiryUtc:dd.MM.yyyy} UTC): точная дата окончания этой Ночной Волны ещё не объявлена разработчиками и изменится перед завершением сезона."
             : $"Официальная дата окончания сезона: {_expiryUtc.ToLocalTime():dd.MM.yyyy HH:mm}";
@@ -850,7 +861,12 @@ namespace WarfAssistant.Models
         public string TimeRemaining
         {
             get => _timeRemaining;
-            set { _timeRemaining = value; OnPropertyChanged(); }
+            set
+            {
+                _timeRemaining = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShowExpiryTimer));
+            }
         }
 
         public string? CredIconUrl { get; set; }

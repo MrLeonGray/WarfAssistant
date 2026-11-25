@@ -483,14 +483,13 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="#0B1915" BorderBrush="#1D5142" BorderThickness="1" Padding="8,5" Margin="0,0,5,5"
-                                                    Cursor="Help" ToolTip="{Binding Detail}">
+                                            <Border Background="#0B1915" BorderBrush="#1D5142" BorderThickness="1" Padding="8,5" Margin="0,0,5,5">
                                                 <StackPanel>
                                                     <DockPanel Margin="0,0,0,2">
                                                         <TextBlock DockPanel.Dock="Right" Text="{Binding DateLabel}" FontSize="8.5" Foreground="#648A7F"/>
                                                         <TextBlock Text="{Binding Title}" FontSize="9.5" FontWeight="Bold" Foreground="#6EE7B7" TextTrimming="CharacterEllipsis"/>
                                                     </DockPanel>
-                                                    <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="#98B2AC" TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="#98B2AC" TextWrapping="Wrap"/>
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
@@ -507,14 +506,13 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="#0B131E" BorderBrush="#213852" BorderThickness="1" Padding="8,5" Margin="0,0,5,5"
-                                                    Cursor="Help" ToolTip="{Binding Detail}">
+                                            <Border Background="#0B131E" BorderBrush="#213852" BorderThickness="1" Padding="8,5" Margin="0,0,5,5">
                                                 <StackPanel>
                                                     <DockPanel Margin="0,0,0,2">
                                                         <TextBlock DockPanel.Dock="Right" Text="{Binding DateLabel}" FontSize="8.5" Foreground="#647B96"/>
                                                         <TextBlock Text="{Binding Title}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource BrushCyan}" TextTrimming="CharacterEllipsis"/>
                                                     </DockPanel>
-                                                    <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="#8FA0B5" TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="#8FA0B5" TextWrapping="Wrap"/>
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
@@ -599,8 +597,7 @@
                                         <DataTemplate>
                                             <Button Command="{Binding DataContext.OpenNewsLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding LinkUrl}" Cursor="Hand" Margin="0,0,8,8"
-                                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
-                                                    ToolTip="{Binding Title}">
+                                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <ctrl:AspectRatioDecorator AspectRatio="1.7777778">
@@ -671,8 +668,7 @@
 
                             <RadioButton Grid.Row="0" GroupName="NavHudTopTabs" Cursor="Hand" Height="56"
                                          IsChecked="{Binding ActiveHudPanel, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=Duviri}"
-                                         Command="{Binding SelectHudPanelCommand}" CommandParameter="Duviri"
-                                         ToolTip="Открыть Спираль Дувири и ротации Цепи (Недели 1–9)">
+                                         Command="{Binding SelectHudPanelCommand}" CommandParameter="Duviri">
                                 <RadioButton.Template>
                                     <ControlTemplate TargetType="RadioButton">
                                         <Border x:Name="DuvBd" BorderBrush="#5F6777" BorderThickness="1" ClipToBounds="True">
@@ -782,7 +778,7 @@
                                 <RowDefinition Height="28"/>
                             </Grid.RowDefinitions>
 
-                            <Button Grid.Row="0" Command="{Binding ToggleNightwaveCommand}" Cursor="Hand" Height="56" ToolTip="Открыть окно Ночной Волны">
+                            <Button Grid.Row="0" Command="{Binding ToggleNightwaveCommand}" Cursor="Hand" Height="56">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border x:Name="NwBd" BorderBrush="#5F6777" BorderThickness="1" ClipToBounds="True">
@@ -817,9 +813,10 @@
                                                     </Grid>
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
                                                         <TextBlock Text="НОЧНАЯ ВОЛНА" FontSize="12" FontWeight="ExtraBold" Foreground="#F8FAFC" HorizontalAlignment="Right"/>
-                                                        <DockPanel ToolTip="{Binding Nightwave.SeasonExpiryHint}" Margin="0,1,0,0">
-                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Nightwave.TimeRemaining, StringFormat=' • ~{0}'}"
-                                                                       FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}"/>
+                                                        <DockPanel Margin="0,1,0,0">
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Nightwave.TimeRemaining, StringFormat=' • {0}'}"
+                                                                       FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}"
+                                                                       Visibility="{Binding Nightwave.ShowExpiryTimer, Converter={StaticResource BoolToVis}}"/>
                                                             <TextBlock Text="{Binding Nightwave.SeasonTitle}" FontSize="10" Foreground="#C4CEDC"
                                                                        TextTrimming="CharacterEllipsis" TextAlignment="Right"/>
                                                         </DockPanel>
@@ -842,7 +839,7 @@
                                     <ColumnDefinition Width="4"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Button Grid.Column="0" Command="{Binding RefreshWorldstateCommand}" Cursor="Hand" Height="28" ToolTip="Обновить живые данные Worldstate">
+                                <Button Grid.Column="0" Command="{Binding RefreshWorldstateCommand}" Cursor="Hand" Height="28">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="BtnBd" Background="#EB090C11" BorderBrush="#4E5666" BorderThickness="1" Padding="5,0">
@@ -1027,7 +1024,7 @@
                     <!-- Drawer Header -->
                     <Border Grid.Row="0" BorderBrush="#464E5C" BorderThickness="0,0,0,1" Padding="12,8" Background="#0D1118">
                         <DockPanel>
-                            <Button DockPanel.Dock="Right" Command="{Binding CloseHudPanelCommand}" Cursor="Hand" ToolTip="Закрыть окно">
+                            <Button DockPanel.Dock="Right" Command="{Binding CloseHudPanelCommand}" Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border x:Name="CloseBd" Background="Transparent" BorderBrush="#39414E" BorderThickness="1" Padding="6,2">
@@ -1750,7 +1747,7 @@
                                                             <TextBlock Text="{Binding MissionType}" FontSize="11" FontWeight="Bold" Foreground="#F1F5F9"/>
                                                             <TextBlock Text="{Binding Node}" FontSize="10" Foreground="#98A4B8" HorizontalAlignment="Right"/>
                                                         </DockPanel>
-                                                        <TextBlock Text="{Binding Modifier}" FontSize="10" Foreground="#FBBF24" Margin="0,2,0,0" ToolTip="{Binding ModifierDesc}"/>
+                                                        <TextBlock Text="{Binding Modifier}" FontSize="10" Foreground="#FBBF24" Margin="0,2,0,0"/>
                                                         <TextBlock Text="{Binding ModifierDesc}" FontSize="9" Foreground="#7A869A" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                                     </StackPanel>
                                                 </Grid>
@@ -2051,30 +2048,14 @@
                     <!-- WARFRAME NIGHTWAVE TOP TITLE BAR -->
                     <Border Grid.Row="0" BorderBrush="#383E4F" BorderThickness="0,0,0,1" Padding="0,0,0,8" Margin="0,0,0,10">
                         <DockPanel>
-                            <Button DockPanel.Dock="Right" Command="{Binding CloseNightwaveCommand}" Cursor="Hand" ToolTip="Закрыть окно Ночной Волны">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="CloseNw" Background="#141824" BorderBrush="#596278" BorderThickness="1" Padding="10,4">
-                                            <TextBlock Text="✕ ЗАКРЫТЬ" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="CloseNw" Property="Background" Value="#251B3A"/>
-                                                <Setter TargetName="CloseNw" Property="BorderBrush" Value="#D8B4FE"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0"
-                                        ToolTip="{Binding Nightwave.SeasonExpiryHint}">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="СЕЗОН: " FontSize="10" Foreground="#8B96A8" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Nightwave.SeasonTitle}" FontSize="11" FontWeight="Bold" Foreground="#E2E8F0" VerticalAlignment="Center"/>
-                                <TextBlock Text="  •  " FontSize="10" Foreground="#4B5568" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Nightwave.TimeRemaining}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" VerticalAlignment="Center"/>
-                                <TextBlock Text=" (ориент.)" FontSize="9.5" Foreground="#7A869A" VerticalAlignment="Center"
-                                           Visibility="{Binding Nightwave.HasUncertainExpiry, Converter={StaticResource BoolToVis}}"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            Visibility="{Binding Nightwave.ShowExpiryTimer, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="  •  " FontSize="10" Foreground="#4B5568" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Nightwave.TimeRemaining}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -2191,21 +2172,12 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Width="140" Height="166" Cursor="Hand">
-                                                <Grid.ToolTip>
-                                                    <StackPanel MaxWidth="260">
-                                                        <TextBlock FontWeight="Bold" Foreground="#F8FAFC">
-                                                            <Run Text="Ранг "/><Run Text="{Binding Rank, Mode=OneWay}"/><Run Text=": "/><Run Text="{Binding RewardName, Mode=OneWay}"/>
-                                                        </TextBlock>
-                                                        <TextBlock Text="{Binding RewardType}" FontSize="10.5" Foreground="#A7B4C7" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                </Grid.ToolTip>
-
+                                            <Grid Width="140" Height="166">
                                                 <!-- Horizontal connector line linking adjacent rank diamonds -->
                                                 <Rectangle Height="1.2" Fill="#535F75" VerticalAlignment="Bottom" Margin="0,0,0,15"/>
 
                                                 <!-- Reward Tile -->
-                                                <Border x:Name="RewardTileBd" Margin="5,0,5,15" BorderBrush="#495367" BorderThickness="1" Padding="5,6,5,13" ClipToBounds="True">
+                                                <Border x:Name="RewardTileBd" Margin="5,0,5,15" BorderBrush="#495367" BorderThickness="1" Padding="4,6,4,12" ClipToBounds="True">
                                                     <Border.Background>
                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                                             <GradientStop Color="#141925" Offset="0.0"/>
@@ -2215,14 +2187,14 @@
                                                     <Grid>
                                                         <Grid.RowDefinitions>
                                                             <RowDefinition Height="*"/>
-                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="26"/>
                                                         </Grid.RowDefinitions>
 
-                                                        <!-- Large crisp Reward Icon (88x88) -->
+                                                        <!-- Large crisp Reward Icon (84x84) -->
                                                         <Grid Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                            <Image Source="{Binding IconBitmap}" Width="88" Height="88" Stretch="Uniform"
+                                                            <Image Source="{Binding IconBitmap}" Width="84" Height="84" Stretch="Uniform"
                                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                            <TextBlock Text="{Binding IconGlyph}" FontSize="32" Foreground="#526078" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            <TextBlock Text="{Binding IconGlyph}" FontSize="30" Foreground="#526078" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                        Visibility="{Binding HasLoadedIcon, Converter={StaticResource InverseBoolToVis}}"/>
                                                         </Grid>
 
@@ -2233,10 +2205,11 @@
                                                             <TextBlock Text="{Binding CountBadge}" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}"/>
                                                         </Border>
 
-                                                        <!-- Reward Name -->
-                                                        <TextBlock Grid.Row="1" Text="{Binding RewardName}" FontSize="9.5" FontWeight="SemiBold"
+                                                        <!-- Reward Name (adaptive font size for crisp 2-line fit) -->
+                                                        <TextBlock Grid.Row="1" Text="{Binding RewardName}" FontSize="{Binding NameFontSize}" FontWeight="SemiBold"
                                                                    Foreground="#E2E8F0" TextAlignment="Center" TextWrapping="Wrap"
-                                                                   MaxHeight="28" TextTrimming="CharacterEllipsis" Margin="2,3,2,0"/>
+                                                                   LineHeight="12" LineStackingStrategy="BlockLineHeight"
+                                                                   VerticalAlignment="Center" Margin="1,2,1,0"/>
                                                     </Grid>
                                                 </Border>
 
@@ -2290,7 +2263,7 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border x:Name="ActCardBd" Background="#0C1018" BorderBrush="#394254" BorderThickness="1"
-                                                        Margin="0,0,6,6" MinHeight="146" ToolTip="{Binding Description}">
+                                                        Margin="0,0,6,6" MinHeight="146">
                                                     <Grid>
                                                         <Grid.RowDefinitions>
                                                             <RowDefinition Height="2"/>
@@ -2313,9 +2286,9 @@
                                                             <Path Data="{StaticResource NightwaveActCrestGeometry}" Width="30" Height="30" Stretch="Uniform"
                                                                   Fill="{Binding TypeBadgeColor}" Opacity="0.82" HorizontalAlignment="Center" Margin="0,0,0,5"/>
                                                             <TextBlock Text="{Binding Title}" FontSize="10.5" FontWeight="Bold" Foreground="#F1F5F9"
-                                                                       TextAlignment="Center" TextWrapping="Wrap" MaxHeight="28" TextTrimming="CharacterEllipsis"/>
+                                                                       TextAlignment="Center" TextWrapping="Wrap"/>
                                                             <TextBlock Text="{Binding Description}" FontSize="9" Foreground="#98A6BC"
-                                                                       TextAlignment="Center" TextWrapping="Wrap" MaxHeight="38" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                                                       TextAlignment="Center" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                                         </StackPanel>
 
                                                         <!-- Standing Reward Footer -->
@@ -2422,22 +2395,13 @@
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border x:Name="ShopSquareTile" Width="144" Height="144" Margin="5" BorderBrush="#3E4759" BorderThickness="1" ClipToBounds="True" Cursor="Hand">
+                                    <Border x:Name="ShopSquareTile" Width="144" Height="144" Margin="5" BorderBrush="#3E4759" BorderThickness="1" ClipToBounds="True">
                                         <Border.Background>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                                 <GradientStop Color="#141925" Offset="0.0"/>
                                                 <GradientStop Color="#0A0E16" Offset="1.0"/>
                                             </LinearGradientBrush>
                                         </Border.Background>
-                                        <Border.ToolTip>
-                                            <StackPanel MaxWidth="280">
-                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#F8FAFC"/>
-                                                <TextBlock FontSize="10.5" Foreground="{StaticResource BrushGoldBright}" Margin="0,2,0,0">
-                                                    <Run Text="{Binding CredCost, Mode=OneWay}"/><Run Text=" Доверия • "/><Run Text="{Binding Category, Mode=OneWay}" Foreground="#A7B4C7"/>
-                                                </TextBlock>
-                                                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="0,3,0,0"/>
-                                            </StackPanel>
-                                        </Border.ToolTip>
                                         <Grid>
                                             <!-- Large Centered Square Item Artwork -->
                                             <Image Source="{Binding IconBitmap}" Width="88" Height="88" Stretch="Uniform"
