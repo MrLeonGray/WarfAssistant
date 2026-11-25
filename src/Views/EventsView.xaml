@@ -5,6 +5,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ctrl="clr-namespace:WarfAssistant.Controls"
              mc:Ignorable="d"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
              d:DesignHeight="790" d:DesignWidth="1160">
     <UserControl.Resources>
         <!-- Crisp Warframe HUD Vector Geometries (auto-overridden if PNGs are placed in data/assets/ui/) -->
@@ -28,11 +30,11 @@
         <Geometry x:Key="NightwaveActCrestGeometry">M12,2 L21,7 L12,22 L3,7 Z M12,5.2 L6.5,8.2 L12,17.4 L17.5,8.2 Z M12,8 L14.5,10.5 L12,13.5 L9.5,10.5 Z</Geometry>
         <Geometry x:Key="NightwaveStandingGeometry">M12,2 L19,7.5 L16.2,20 L7.8,20 L5,7.5 Z M12,6.2 L8.8,9 L10.2,16.5 L13.8,16.5 L15.2,9 Z</Geometry>
 
-        <!-- Uniform Docked Top-Right Navigation Icon Cell (ALL 7 buttons share identical 44x34 size) -->
+        <!-- Uniform Docked Top-Right Navigation Icon Cell (ALL 7 buttons share identical 48x36 size -> 338x38 total) -->
         <Style x:Key="NavWorldIconButtonStyle" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Width" Value="44"/>
-            <Setter Property="Height" Value="34"/>
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="36"/>
             <Setter Property="BorderThickness" Value="0,0,1,0"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -177,346 +179,721 @@
         <!-- =============================================================== -->
         <Grid Panel.ZIndex="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="38"/>
+                <RowDefinition Height="8"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Compact Header (stays cleanly left of the 310px Top-Right Icon Strip) -->
-            <Border Grid.Row="0" Background="#0B0F16" BorderBrush="#2D3646" BorderThickness="1"
-                    Height="34" Padding="10,0" Margin="0,0,320,6">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="ЗВЁЗДНАЯ КАРТА • СВОДКА СИСТЕМЫ" FontSize="11.5" FontWeight="Bold" Foreground="#E4E9F0"/>
-                        <TextBlock Text="  |  " FontSize="11" Foreground="#394457"/>
-                        <TextBlock Text="{Binding SyncLabel}" FontSize="10" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center"/>
-                    </StackPanel>
+            <!-- 5 Open World Timers Strip: exact 38px height matching Top-Right 7 HUD buttons (338x38), exact 8px gutter -->
+            <Grid Grid.Row="0" Margin="0,0,346,0">
+                <ItemsControl ItemsSource="{Binding WorldCycles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="5" Margin="0,0,-6,0"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#0B0F16" BorderBrush="#2C3544" BorderThickness="1" Height="38" Padding="7,2,5,2" Margin="0,0,6,0" ToolTip="{Binding FullToolTip}">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Grid.Row="0">
+                                        <Button DockPanel.Dock="Right"
+                                                Command="{Binding DataContext.ToggleCycleNotificationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Cursor="Hand" ToolTip="{Binding NotifyTarget}" Margin="4,0,0,0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="BellBd" Background="#131924" BorderBrush="#334054" BorderThickness="1" Width="14" Height="14">
+                                                        <Path Data="{StaticResource BellGeometry}" Width="8" Height="8" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <Path.Style>
+                                                                <Style TargetType="Path">
+                                                                    <Setter Property="Fill" Value="#7A889E"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding NotifyEnabled}" Value="True">
+                                                                            <Setter Property="Fill" Value="{StaticResource BrushGoldBright}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Path.Style>
+                                                        </Path>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding NotifyEnabled}" Value="True">
+                                                            <Setter TargetName="BellBd" Property="Background" Value="#2A200D"/>
+                                                            <Setter TargetName="BellBd" Property="BorderBrush" Value="{StaticResource BrushGold}"/>
+                                                        </DataTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <TextBlock Text="{Binding LocationName}" FontSize="9.5" FontWeight="SemiBold" Foreground="#DCE3EE"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <DockPanel Grid.Row="1" Margin="0,1,0,0">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding TimeRemaining}" FontSize="10.5" FontWeight="ExtraBold"
+                                                   Foreground="{StaticResource BrushGoldBright}" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        <TextBlock Text="{Binding State}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="#0F1B1D" BorderBrush="#29544C" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
-                                Cursor="Help" ToolTip="{Binding SimarisLocationTooltip}">
-                            <TextBlock FontSize="9.5" Foreground="#A7F3D0">
-                                <Run Text="СИМЭРИС: " Foreground="#7C8A9E" FontWeight="Bold"/>
-                                <Run Text="{Binding SimarisTarget, Mode=OneWay}" FontWeight="SemiBold"/>
-                            </TextBlock>
-                        </Border>
-                        <Border Background="#13111E" BorderBrush="#393059" BorderThickness="1" Padding="7,2">
-                            <TextBlock FontSize="9.5" Foreground="#C4B5FD">
-                                <Run Text="ВУАЛЬ: " Foreground="#7C8A9E" FontWeight="Bold"/>
-                                <Run Text="{Binding SentientOutpostText, Mode=OneWay}"/>
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- 5 Open World Timers Strip (stays cleanly left of the 310px Duviri Banner Button) -->
-            <ItemsControl Grid.Row="1" ItemsSource="{Binding WorldCycles}" Margin="0,0,320,8">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="5"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="#0B0F16" BorderBrush="#2C3544" BorderThickness="1" Height="56" Padding="9,7" Margin="0,0,5,0" ToolTip="{Binding FullToolTip}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <DockPanel Grid.Row="0">
-                                    <Button DockPanel.Dock="Right"
-                                            Command="{Binding DataContext.ToggleCycleNotificationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}" Cursor="Hand" ToolTip="{Binding NotifyTarget}" Margin="4,0,0,0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="BellBd" Background="#131924" BorderBrush="#334054" BorderThickness="1" Padding="4,2">
-                                                    <Path Data="{StaticResource BellGeometry}" Width="10" Height="10" Stretch="Uniform">
-                                                        <Path.Style>
-                                                            <Style TargetType="Path">
-                                                                <Setter Property="Fill" Value="#7A889E"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding NotifyEnabled}" Value="True">
-                                                                        <Setter Property="Fill" Value="{StaticResource BrushGoldBright}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Path.Style>
-                                                    </Path>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <DataTrigger Binding="{Binding NotifyEnabled}" Value="True">
-                                                        <Setter TargetName="BellBd" Property="Background" Value="#2A200D"/>
-                                                        <Setter TargetName="BellBd" Property="BorderBrush" Value="{StaticResource BrushGold}"/>
-                                                    </DataTrigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <TextBlock Text="{Binding LocationName}" FontSize="10" FontWeight="SemiBold" Foreground="#DCE3ED"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                </DockPanel>
-                                <DockPanel Grid.Row="1" VerticalAlignment="Bottom">
-                                    <TextBlock Text="{Binding State}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushCyan}" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding TimeRemaining}" FontSize="12" FontWeight="ExtraBold" Foreground="{StaticResource BrushGoldBright}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </DockPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <!-- Base Body: Endgame 1999/Archimedea/Steel Path Left + Official News Right -->
+            <!-- Base Body: Endgame 1999/Archimedea/Steel Path Left + Official News & Bottom HUD Right -->
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.05*"/>
-                    <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="0.95*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- LEFT: 1999 Calendar, Archimedeas, Descendia, Steel Path -->
+                <!-- LEFT: Endgame & Weekly Rotations with Warframe Sub-Tabs -->
                 <Border Grid.Column="0" Background="#0A0E15" BorderBrush="#2D3646" BorderThickness="1" Padding="10">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="ЭНДГЕЙМ И РОТАЦИИ (1999 • АРХИМЕДИИ • СТАЛЬНОЙ ПУТЬ)"
-                                   FontSize="10.5" FontWeight="Bold" Foreground="#D8DCE5" Margin="0,0,0,7"/>
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel>
-                                <!-- Archimedeas -->
-                                <ItemsControl ItemsSource="{Binding Archimedeas}" Margin="0,0,0,4">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#0E131C" BorderBrush="{Binding AccentColor}" BorderThickness="1" Padding="9" Margin="0,0,0,7">
-                                                <StackPanel>
-                                                    <DockPanel Margin="0,0,0,5">
-                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding TimeRemaining}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
-                                                        <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="Bold" Foreground="{Binding AccentColor}" TextWrapping="Wrap"/>
-                                                    </DockPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Sub-Tab Strip + Live Weekly Reset Timer -->
+                        <DockPanel Grid.Row="0" Margin="0,0,0,9">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                <Path Data="{StaticResource ClockGeometry}" Width="11" Height="11" Stretch="Uniform" Fill="#7E8CA2" Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding ActiveEndgameTimeRemaining}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
+                            </StackPanel>
+
+                            <WrapPanel Orientation="Horizontal">
+                                <RadioButton Content="АРХИМЕДИИ" GroupName="EndgameSubTabs" Style="{StaticResource StarChartSubTabStyle}"
+                                             IsChecked="{Binding EndgameSubTab, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=Archimedea}"
+                                             Command="{Binding SwitchEndgameSubTabCommand}" CommandParameter="Archimedea"/>
+                                <RadioButton Content="СПУСК" GroupName="EndgameSubTabs" Style="{StaticResource StarChartSubTabStyle}"
+                                             IsChecked="{Binding EndgameSubTab, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=Descendia}"
+                                             Command="{Binding SwitchEndgameSubTabCommand}" CommandParameter="Descendia"/>
+                                <RadioButton Content="1999 ХЕКС" GroupName="EndgameSubTabs" Style="{StaticResource StarChartSubTabStyle}"
+                                             IsChecked="{Binding EndgameSubTab, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=Calendar}"
+                                             Command="{Binding SwitchEndgameSubTabCommand}" CommandParameter="Calendar"/>
+                                <RadioButton Content="СТАЛЬНОЙ ПУТЬ" GroupName="EndgameSubTabs" Style="{StaticResource StarChartSubTabStyle}" Margin="0"
+                                             IsChecked="{Binding EndgameSubTab, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=SteelPath}"
+                                             Command="{Binding SwitchEndgameSubTabCommand}" CommandParameter="SteelPath"/>
+                            </WrapPanel>
+                        </DockPanel>
+
+                        <!-- SUB-TAB 1: ARCHIMEDEAS (Deep + Temporal) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.Style>
+                                <Style TargetType="ScrollViewer">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EndgameSubTab}" Value="Archimedea">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ScrollViewer.Style>
+                            <ItemsControl ItemsSource="{Binding Archimedeas}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0D121B" BorderBrush="#293447" BorderThickness="1" Margin="0,0,0,9">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Rectangle Grid.Column="0" Fill="{Binding AccentColor}"/>
+                                                <StackPanel Grid.Column="1" Margin="10,9">
+                                                    <TextBlock Text="{Binding Title}" FontSize="11.5" FontWeight="Bold" Foreground="{Binding AccentColor}" TextWrapping="Wrap" Margin="0,0,0,7"/>
+
+                                                    <!-- 3 Structured Mission Cards -->
                                                     <ItemsControl ItemsSource="{Binding Missions}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Border Background="#090D14" BorderBrush="#222E40" BorderThickness="1" Padding="7,4" Margin="0,0,0,3">
-                                                                    <StackPanel>
-                                                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="#EAEEF4">
-                                                                            <Run Text="{Binding Index, Mode=OneWay, StringFormat='{}{0}. '}"/>
-                                                                            <Run Text="{Binding MissionType, Mode=OneWay}"/>
-                                                                            <Run Text="{Binding Faction, Mode=OneWay, StringFormat=' ({0})'}" Foreground="#7D899D"/>
-                                                                        </TextBlock>
-                                                                        <TextBlock Text="{Binding DeviationName, StringFormat='Отклонение: {0}'}" FontSize="9" Foreground="{StaticResource BrushGoldBright}" ToolTip="{Binding DeviationDesc}"/>
-                                                                        <TextBlock Text="{Binding RisksSummary, StringFormat='Риски: {0}'}" FontSize="9" Foreground="#FCA5A5" TextWrapping="Wrap"/>
-                                                                    </StackPanel>
+                                                                <Border Background="#090D14" BorderBrush="#202B3D" BorderThickness="1" Padding="8,6" Margin="0,0,0,5">
+                                                                    <Grid>
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                        </Grid.RowDefinitions>
+
+                                                                        <DockPanel Grid.Row="0" Margin="0,0,0,4">
+                                                                            <Border DockPanel.Dock="Right" Background="#1E1A0F" BorderBrush="#7A5F22" BorderThickness="1"
+                                                                                    Padding="6,1.5" ToolTip="{Binding DeviationDesc}" Cursor="Help">
+                                                                                <TextBlock Text="{Binding DeviationName}" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}"/>
+                                                                            </Border>
+                                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                                <TextBlock Text="{Binding Index, StringFormat='{}{0}.'}" FontSize="10.5" FontWeight="ExtraBold" Foreground="{StaticResource BrushGold}" Margin="0,0,5,0"/>
+                                                                                <TextBlock Text="{Binding MissionType}" FontSize="10.5" FontWeight="Bold" Foreground="#F1F5F9"/>
+                                                                                <TextBlock Text="{Binding Faction, StringFormat=' ({0})'}" FontSize="9.5" Foreground="#7E8CA2" VerticalAlignment="Center"/>
+                                                                            </StackPanel>
+                                                                        </DockPanel>
+
+                                                                        <!-- Discrete Risk Chips -->
+                                                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Risks}">
+                                                                            <ItemsControl.ItemsPanel>
+                                                                                <ItemsPanelTemplate>
+                                                                                    <WrapPanel Orientation="Horizontal"/>
+                                                                                </ItemsPanelTemplate>
+                                                                            </ItemsControl.ItemsPanel>
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <Border Background="#221116" BorderBrush="#692634" BorderThickness="1" Padding="6,1.5" Margin="0,0,4,2">
+                                                                                        <TextBlock Text="{Binding}" FontSize="8.5" Foreground="#FCA5A5"/>
+                                                                                    </Border>
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
+                                                                    </Grid>
                                                                 </Border>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    <ItemsControl ItemsSource="{Binding PersonalModifiers}" Margin="0,2,0,0">
-                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border Background="#181324" BorderBrush="#46316B" BorderThickness="1" Padding="5,1.5" Margin="0,0,3,2" ToolTip="{Binding Description}">
-                                                                    <TextBlock Text="{Binding Name}" FontSize="8.5" Foreground="#DDD6FE"/>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
+
+                                                    <!-- Personal Modifiers Section -->
+                                                    <StackPanel Margin="0,3,0,0">
+                                                        <TextBlock Text="ЛИЧНЫЕ МОДИФИКАТОРЫ" FontSize="8.5" FontWeight="Bold" Foreground="#7D899D" Margin="0,0,0,4"/>
+                                                        <ItemsControl ItemsSource="{Binding PersonalModifiers}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel Orientation="Horizontal"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="#181326" BorderBrush="#4C3575" BorderThickness="1" Padding="7,2.5" Margin="0,0,4,4"
+                                                                            Cursor="Help" ToolTip="{Binding Description}">
+                                                                        <TextBlock Text="{Binding Name}" FontSize="9" FontWeight="SemiBold" Foreground="#DDD6FE"/>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- SUB-TAB 2: DESCENDIA (21 Floors Tower with Milestones & Russian Mission Types) -->
+                        <Grid Grid.Row="1">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EndgameSubTab}" Value="Descendia">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#0D121B" BorderBrush="#283548" BorderThickness="1" Padding="9,6" Margin="0,0,0,7">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="Чекпоинты: #7, #14  •  Финал: #21" FontSize="9" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                                    <TextBlock Text="НИСХОЖДЕНИЕ (21 ЭТАЖ)" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </Border>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Descendia.Challenges}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowBorder}" BorderThickness="1"
+                                                    Padding="8,4.5" Margin="0,0,0,3" ToolTip="{Binding DetailTooltip}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="30"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Index, StringFormat='#{0}'}" FontSize="9.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource BrushGold}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding ChallengeName}" FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="#EEF2F8" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="2" Background="#161D2A" BorderBrush="{Binding BadgeColor}" BorderThickness="1"
+                                                            Padding="5,0.5" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                            Visibility="{Binding HasBadge, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="{Binding BadgeLabel}" FontSize="8" FontWeight="Bold" Foreground="{Binding BadgeColor}"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Column="3" Text="{Binding MissionType}" FontSize="9.5" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource BrushCyan}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- SUB-TAB 3: 1999 HEX CALENDAR (Structured Cards: Prizes / Buffs / Tasks) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.Style>
+                                <Style TargetType="ScrollViewer">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EndgameSubTab}" Value="Calendar">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ScrollViewer.Style>
+                            <StackPanel>
+                                <Border Background="#0D1917" BorderBrush="#1F5143" BorderThickness="1" Padding="9,6" Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding HexCalendar.SeasonDisplay}" FontSize="11" FontWeight="Bold" Foreground="#34D399"/>
+                                </Border>
+
+                                <!-- Big Prizes (2-column compact gold cards) -->
+                                <TextBlock Text="БОЛЬШИЕ ПРИЗЫ" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}" Margin="0,0,0,4"/>
+                                <ItemsControl ItemsSource="{Binding HexCalendar.Prizes}" Margin="0,0,0,8">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" Margin="0,0,-5,0"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#1A160D" BorderBrush="#755A1D" BorderThickness="1" Padding="8,5" Margin="0,0,5,5">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding DateLabel}" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Title}" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Overrides / Buffs (2-column emerald cards) -->
+                                <TextBlock Text="БАФФЫ (ПЕРЕОПРЕДЕЛЕНИЯ)" FontSize="9.5" FontWeight="Bold" Foreground="#34D399" Margin="0,0,0,4"/>
+                                <ItemsControl ItemsSource="{Binding HexCalendar.Overrides}" Margin="0,0,0,8">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" Margin="0,0,-5,0"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0B1915" BorderBrush="#1D5142" BorderThickness="1" Padding="8,5" Margin="0,0,5,5"
+                                                    Cursor="Help" ToolTip="{Binding Detail}">
+                                                <StackPanel>
+                                                    <DockPanel Margin="0,0,0,2">
+                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding DateLabel}" FontSize="8.5" Foreground="#648A7F"/>
+                                                        <TextBlock Text="{Binding Title}" FontSize="9.5" FontWeight="Bold" Foreground="#6EE7B7" TextTrimming="CharacterEllipsis"/>
+                                                    </DockPanel>
+                                                    <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="#98B2AC" TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <!-- Descendia -->
-                                <Border Background="#0E131C" BorderBrush="#33455E" BorderThickness="1" Padding="9" Margin="0,0,0,7"
-                                        Visibility="{Binding Descendia.HasChallenges, Converter={StaticResource BoolToVis}}">
-                                    <StackPanel>
-                                        <DockPanel Margin="0,0,0,5">
-                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Descendia.TimeRemaining}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
-                                            <TextBlock Text="НИСХОЖДЕНИЕ (DESCENDIA)" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
-                                        </DockPanel>
-                                        <ItemsControl ItemsSource="{Binding Descendia.Challenges}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#090D14" BorderBrush="#202B3D" BorderThickness="1" Padding="6,3.5" Margin="0,0,0,2.5">
-                                                        <DockPanel>
-                                                            <TextBlock DockPanel.Dock="Left" Text="{Binding Index, StringFormat='#{0} '}" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
-                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding MissionType}" FontSize="9" Foreground="{StaticResource BrushCyan}"/>
-                                                            <TextBlock Text="{Binding ChallengeName}" FontSize="9.5" Foreground="#E5EAF2"/>
-                                                        </DockPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- 1999 Hex Calendar -->
-                                <Border Background="#0E131C" BorderBrush="#1F5143" BorderThickness="1" Padding="9" Margin="0,0,0,7">
-                                    <StackPanel>
-                                        <DockPanel Margin="0,0,0,5">
-                                            <TextBlock DockPanel.Dock="Right" Text="{Binding HexCalendar.TimeRemaining}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
-                                            <TextBlock Text="{Binding HexCalendar.SeasonDisplay, StringFormat='КАЛЕНДАРЬ 1999: {0}'}" FontSize="10.5" FontWeight="Bold" Foreground="#34D399"/>
-                                        </DockPanel>
-                                        <ItemsControl ItemsSource="{Binding HexCalendar.Prizes}" Margin="0,0,0,3">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#1B180F" BorderBrush="#6B531B" BorderThickness="1" Padding="6,3.5" Margin="0,0,0,2.5">
-                                                        <DockPanel>
-                                                            <TextBlock DockPanel.Dock="Left" Text="{Binding DateLabel, StringFormat='[{0}] '}" FontSize="9" Foreground="{StaticResource BrushGold}"/>
-                                                            <TextBlock Text="{Binding Title}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" TextWrapping="Wrap"/>
-                                                        </DockPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <ItemsControl ItemsSource="{Binding HexCalendar.Overrides}" Margin="0,0,0,3">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#0C1C18" BorderBrush="#1C4F40" BorderThickness="1" Padding="6,3.5" Margin="0,0,0,2.5" ToolTip="{Binding Detail}">
-                                                        <StackPanel>
-                                                            <TextBlock FontSize="9.5" FontWeight="Bold" Foreground="#6EE7B7">
-                                                                <Run Text="{Binding DateLabel, Mode=OneWay, StringFormat='[{0}] БАФФ: '}"/>
-                                                                <Run Text="{Binding Title, Mode=OneWay}"/>
-                                                            </TextBlock>
-                                                            <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <ItemsControl ItemsSource="{Binding HexCalendar.Tasks}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#0B131E" BorderBrush="#1F3650" BorderThickness="1" Padding="6,3.5" Margin="0,0,0,2.5" ToolTip="{Binding Detail}">
-                                                        <StackPanel>
-                                                            <TextBlock FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource BrushCyan}">
-                                                                <Run Text="{Binding DateLabel, Mode=OneWay, StringFormat='[{0}] '}"/>
-                                                                <Run Text="{Binding Title, Mode=OneWay}"/>
-                                                            </TextBlock>
-                                                            <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Steel Path (Teshin) -->
-                                <Border Background="#0E131C" BorderBrush="#2D3747" BorderThickness="1" Padding="9">
-                                    <StackPanel>
-                                        <DockPanel Margin="0,0,0,5">
-                                            <TextBlock DockPanel.Dock="Right" Text="{Binding SteelPath.TimeRemaining}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}"/>
-                                            <TextBlock Text="ТЕШИН: СТАЛЬНОЙ ПУТЬ" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
-                                        </DockPanel>
-                                        <Border Background="#18261A" BorderBrush="{StaticResource BrushSuccessGreen}" BorderThickness="1" Padding="7,5" Margin="0,0,0,5">
-                                            <DockPanel>
-                                                <TextBlock DockPanel.Dock="Right" Text="{Binding SteelPath.CurrentRewardCost, StringFormat='{}{0} Эссенции'}"
-                                                           FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}"/>
-                                                <TextBlock Text="{Binding SteelPath.CurrentRewardName, StringFormat='Текущая неделя: {0}'}"
-                                                           FontSize="10.5" FontWeight="Bold" Foreground="#F0F4F8"/>
-                                            </DockPanel>
-                                        </Border>
-                                        <ItemsControl ItemsSource="{Binding SteelPath.Rotation}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowBorder}" BorderThickness="1" Padding="6,3.5" Margin="0,0,0,2.5">
-                                                        <DockPanel>
-                                                            <TextBlock DockPanel.Dock="Left" Text="{Binding Index, StringFormat='#{0}  '}" FontSize="9" Foreground="{StaticResource BrushTextMuted}"/>
-                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Cost, StringFormat='{}{0} Эсс.'}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushGold}"/>
-                                                            <TextBlock Text="{Binding Name}" FontSize="9.5" Foreground="#E5EAF2"/>
-                                                        </DockPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
+                                <!-- Hex Tasks (2-column cyan cards) -->
+                                <TextBlock Text="ЗАДАНИЯ ХЕКСА" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource BrushCyan}" Margin="0,0,0,4"/>
+                                <ItemsControl ItemsSource="{Binding HexCalendar.Tasks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" Margin="0,0,-5,0"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0B131E" BorderBrush="#213852" BorderThickness="1" Padding="8,5" Margin="0,0,5,5"
+                                                    Cursor="Help" ToolTip="{Binding Detail}">
+                                                <StackPanel>
+                                                    <DockPanel Margin="0,0,0,2">
+                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding DateLabel}" FontSize="8.5" Foreground="#647B96"/>
+                                                        <TextBlock Text="{Binding Title}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource BrushCyan}" TextTrimming="CharacterEllipsis"/>
+                                                    </DockPanel>
+                                                    <TextBlock Text="{Binding Detail}" FontSize="8.5" Foreground="#8FA0B5" TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </ScrollViewer>
-                    </DockPanel>
+
+                        <!-- SUB-TAB 4: STEEL PATH (TESHIN — Hero Card + 2-Column 8-Week Rotation Grid) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.Style>
+                                <Style TargetType="ScrollViewer">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EndgameSubTab}" Value="SteelPath">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ScrollViewer.Style>
+                            <StackPanel>
+                                <Border Background="#13251B" BorderBrush="{StaticResource BrushSuccessGreen}" BorderThickness="1" Padding="11,9" Margin="0,0,0,10">
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Right" Background="#251F11" BorderBrush="#9E7F3B" BorderThickness="1" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SteelPath.CurrentRewardCost, StringFormat='{}{0} Эссенции'}"
+                                                       FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}"/>
+                                        </Border>
+                                        <StackPanel>
+                                            <TextBlock Text="ПОЧЕСТИ ТЕШИНА • ТЕКУЩАЯ НЕДЕЛЯ" FontSize="8.5" FontWeight="Bold" Foreground="#6EE7B7"/>
+                                            <TextBlock Text="{Binding SteelPath.CurrentRewardName}" FontSize="13" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+
+                                <TextBlock Text="РОТАЦИЯ (8 НЕДЕЛЬ)" FontSize="9.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,6"/>
+                                <ItemsControl ItemsSource="{Binding SteelPath.Rotation}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" Margin="0,0,-6,0"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowBorder}" BorderThickness="1"
+                                                    Padding="9,7" Margin="0,0,6,6">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Index, StringFormat='#{0}'}" FontSize="10" FontWeight="Bold"
+                                                               Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Cost, StringFormat='{}{0} Эсс.'}" FontSize="9.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource BrushGoldBright}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                    <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="#EEF2F8"
+                                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </Border>
 
-                <!-- RIGHT BASE: Official News (bottom margin leaves Nightwave corner clear) -->
-                <Border Grid.Column="2" Background="#0A0E15" BorderBrush="#2D3646" BorderThickness="1" Padding="10" Margin="0,0,0,94">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="ОФИЦИАЛЬНЫЕ НОВОСТИ И ОБНОВЛЕНИЯ" FontSize="10.5" FontWeight="Bold" Foreground="#D8DCE5" Margin="0,0,0,7"/>
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding NewsItems}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <UniformGrid Columns="2" VerticalAlignment="Top"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Command="{Binding DataContext.OpenNewsLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding LinkUrl}" Cursor="Hand" Margin="0,0,6,6"
-                                                HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
-                                                ToolTip="{Binding Title}">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <ctrl:AspectRatioDecorator AspectRatio="1.7777778">
-                                                        <Border x:Name="NBd" Background="#0D131D" BorderBrush="#2C394E"
-                                                                BorderThickness="1" ClipToBounds="True">
-                                                            <Grid>
-                                                                <Image Source="{Binding BannerBitmap}" Stretch="UniformToFill" Opacity="0.90"
-                                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                <Border>
-                                                                    <Border.Background>
-                                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                            <GradientStop Color="#1406090E" Offset="0.0"/>
-                                                                            <GradientStop Color="#8E070B12" Offset="0.60"/>
-                                                                            <GradientStop Color="#F0070B12" Offset="1.0"/>
-                                                                        </LinearGradientBrush>
-                                                                    </Border.Background>
-                                                                </Border>
-                                                                <Grid Margin="8,6">
-                                                                    <Grid.RowDefinitions>
-                                                                        <RowDefinition Height="Auto"/>
-                                                                        <RowDefinition Height="*"/>
-                                                                    </Grid.RowDefinitions>
-                                                                    <Grid Grid.Row="0">
-                                                                        <Border Background="{Binding CategoryColor}" Padding="5,1" HorizontalAlignment="Left">
-                                                                            <TextBlock Text="{Binding CategoryLabel}" FontSize="8" FontWeight="Bold" Foreground="#090D14"/>
-                                                                        </Border>
-                                                                        <Border Background="#BD070B12" Padding="5,1" HorizontalAlignment="Right">
-                                                                            <TextBlock Text="{Binding DateDisplay}" FontSize="8.5" FontWeight="SemiBold" Foreground="#DCE7F5"/>
-                                                                        </Border>
+                <!-- RIGHT BASE: Official News + Aligned Bottom Strip (Simaris/Veil + Nightwave) -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="8"/>
+                        <RowDefinition Height="88"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#0A0E15" BorderBrush="#2D3646" BorderThickness="1" Padding="10">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="ОФИЦИАЛЬНЫЕ НОВОСТИ И ОБНОВЛЕНИЯ" FontSize="10.5" FontWeight="Bold" Foreground="#D8DCE5" Margin="0,0,0,8"/>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding NewsItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" VerticalAlignment="Top" Margin="0,0,-8,0"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.OpenNewsLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding LinkUrl}" Cursor="Hand" Margin="0,0,8,8"
+                                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                                    ToolTip="{Binding Title}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <ctrl:AspectRatioDecorator AspectRatio="1.7777778">
+                                                            <Border x:Name="NBd" Background="#0D131D" BorderBrush="#2C394E"
+                                                                    BorderThickness="1" ClipToBounds="True">
+                                                                <Grid>
+                                                                    <Image Source="{Binding BannerBitmap}" Stretch="UniformToFill" Opacity="0.90"
+                                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                    <Border>
+                                                                        <Border.Background>
+                                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                <GradientStop Color="#1406090E" Offset="0.0"/>
+                                                                                <GradientStop Color="#8E070B12" Offset="0.60"/>
+                                                                                <GradientStop Color="#F0070B12" Offset="1.0"/>
+                                                                            </LinearGradientBrush>
+                                                                        </Border.Background>
+                                                                    </Border>
+                                                                    <Grid Margin="8,6">
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                            <RowDefinition Height="*"/>
+                                                                        </Grid.RowDefinitions>
+                                                                        <Grid Grid.Row="0">
+                                                                            <Border Background="{Binding CategoryColor}" Padding="5,1" HorizontalAlignment="Left">
+                                                                                <TextBlock Text="{Binding CategoryLabel}" FontSize="8" FontWeight="Bold" Foreground="#090D14"/>
+                                                                            </Border>
+                                                                            <Border Background="#BD070B12" Padding="5,1" HorizontalAlignment="Right">
+                                                                                <TextBlock Text="{Binding DateDisplay}" FontSize="8.5" FontWeight="SemiBold" Foreground="#DCE7F5"/>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                        <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="10" FontWeight="Bold"
+                                                                                   Foreground="#FFFFFF" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                                                                   MaxHeight="40" VerticalAlignment="Bottom"/>
                                                                     </Grid>
-                                                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="10" FontWeight="Bold"
-                                                                               Foreground="#FFFFFF" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
-                                                                               MaxHeight="40" VerticalAlignment="Bottom"/>
                                                                 </Grid>
-                                                            </Grid>
-                                                        </Border>
-                                                    </ctrl:AspectRatioDecorator>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="NBd" Property="BorderBrush" Value="#E2E8F0"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </DockPanel>
-                </Border>
+                                                            </Border>
+                                                        </ctrl:AspectRatioDecorator>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="NBd" Property="BorderBrush" Value="#E2E8F0"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- SYMMETRICAL BOTTOM DOCK (88px): Left = Duviri (56) + Simaris/Veil (28) | 8px | Right = Nightwave (56) + Refresh/Reset (28) -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- LEFT HALF: Duviri Banner (56px, exact same size as Nightwave) + 4px + Simaris & Veil (28px, exact same height as Refresh/Reset) -->
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="56"/>
+                                <RowDefinition Height="4"/>
+                                <RowDefinition Height="28"/>
+                            </Grid.RowDefinitions>
+
+                            <RadioButton Grid.Row="0" GroupName="NavHudTopTabs" Cursor="Hand" Height="56"
+                                         IsChecked="{Binding ActiveHudPanel, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=Duviri}"
+                                         Command="{Binding SelectHudPanelCommand}" CommandParameter="Duviri"
+                                         ToolTip="Открыть Спираль Дувири и ротации Цепи (Недели 1–9)">
+                                <RadioButton.Template>
+                                    <ControlTemplate TargetType="RadioButton">
+                                        <Border x:Name="DuvBd" BorderBrush="#5F6777" BorderThickness="1" ClipToBounds="True">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#1F2E28" Offset="0.0"/>
+                                                    <GradientStop Color="#151D29" Offset="0.52"/>
+                                                    <GradientStop Color="#0B0F17" Offset="1.0"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <Grid>
+                                                <Image Source="{Binding UiIconDuviriBanner}" Stretch="UniformToFill" Opacity="0.88"
+                                                       Visibility="{Binding HasUiIconDuviriBanner, Converter={StaticResource BoolToVis}}"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <Border>
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                            <GradientStop Color="#20080C12" Offset="0.0"/>
+                                                            <GradientStop Color="#C4080C12" Offset="0.6"/>
+                                                            <GradientStop Color="#EC080C12" Offset="1.0"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                                <Grid Margin="10,0,12,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid Grid.Column="0" Width="42" Height="42" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                          Visibility="{Binding HasUiIconDuviriBanner, Converter={StaticResource InverseBoolToVis}}">
+                                                        <Ellipse Stroke="#88A899" StrokeThickness="1.4" Width="40" Height="40" Fill="#121D1A"/>
+                                                        <Polygon Points="21,7 28,15 25,28 21,34 17,28 14,15" Stroke="#D4C79A" StrokeThickness="1.3" Fill="#1E2C27"/>
+                                                        <Ellipse Fill="#67E8F9" Width="5" Height="5" VerticalAlignment="Top" Margin="0,17,0,0"/>
+                                                    </Grid>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+                                                        <TextBlock Text="ДУВИРИ • РОТАЦИИ ЦЕПИ" FontSize="12" FontWeight="ExtraBold" Foreground="#F8FAFC"
+                                                                   HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                                                        <DockPanel Margin="0,1,0,0">
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding DuviriMood.TimeRemaining, StringFormat=' • {0}'}"
+                                                                       FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}"/>
+                                                            <TextBlock Text="{Binding DuviriMood.CurrentMood}" FontSize="10" Foreground="{StaticResource BrushCyan}"
+                                                                       TextTrimming="CharacterEllipsis" TextAlignment="Right"/>
+                                                        </DockPanel>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="DuvBd" Property="BorderBrush" Value="#C8D0DC"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="DuvBd" Property="BorderBrush" Value="#F1F5F9"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </RadioButton.Template>
+                            </RadioButton>
+
+                            <!-- Simaris & Veil (2 equal 28px cells, matching Refresh/Reset right beside them) -->
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="4"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Height="28" Background="#0B1416" BorderBrush="#29544C" BorderThickness="1"
+                                        Cursor="Help" ToolTip="{Binding SimarisLocationTooltip}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="0" Fill="#10B981"/>
+                                        <TextBlock Grid.Column="1" FontSize="9.5" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                   Margin="5,0" TextTrimming="CharacterEllipsis">
+                                            <Run Text="СИМЭРИС: " Foreground="#7A8E9E" FontWeight="Bold"/>
+                                            <Run Text="{Binding SimarisTarget, Mode=OneWay}" Foreground="#A7F3D0" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Column="2" Height="28" Background="#100E1B" BorderBrush="#3E3263" BorderThickness="1"
+                                        Cursor="Help" ToolTip="Активная аномалия Владеющих Разумом (корабль Мьюрекс) в Проксиме Вуали (Рэйлджек)">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="0" Fill="#A855F7"/>
+                                        <TextBlock Grid.Column="1" FontSize="9.5" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                   Margin="5,0" TextTrimming="CharacterEllipsis">
+                                            <Run Text="ВУАЛЬ: " Foreground="#8884A3" FontWeight="Bold"/>
+                                            <Run Text="{Binding SentientOutpostText, Mode=OneWay}" Foreground="#DDD6FE" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <!-- RIGHT HALF: Nightwave Banner (56px, exact same size as Duviri) + 4px + Action Strip (28px) -->
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="56"/>
+                                <RowDefinition Height="4"/>
+                                <RowDefinition Height="28"/>
+                            </Grid.RowDefinitions>
+
+                            <Button Grid.Row="0" Command="{Binding ToggleNightwaveCommand}" Cursor="Hand" Height="56" ToolTip="Открыть окно Ночной Волны">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="NwBd" BorderBrush="#5F6777" BorderThickness="1" ClipToBounds="True">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#1F1634" Offset="0.0"/>
+                                                    <GradientStop Color="#121420" Offset="0.45"/>
+                                                    <GradientStop Color="#0B0D12" Offset="1.0"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <Grid>
+                                                <Path Data="M60,28 Q95,12 130,28 T200,28 T270,28 T340,28" Stroke="#2D3D5A" StrokeThickness="1.3" Opacity="0.5"/>
+                                                <Grid Margin="10,0,12,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid Grid.Column="0" Width="42" Height="42" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <Image Source="{Binding UiIconNightwave}" Stretch="Uniform"
+                                                               Visibility="{Binding HasUiIconNightwave, Converter={StaticResource BoolToVis}}"/>
+                                                        <Grid Visibility="{Binding HasUiIconNightwave, Converter={StaticResource InverseBoolToVis}}">
+                                                            <Ellipse Stroke="#C084FC" StrokeThickness="1.5" StrokeDashArray="3,2" Width="40" Height="40" Opacity="0.7"/>
+                                                            <Ellipse Fill="#0E121B" Stroke="#67E8F9" StrokeThickness="1.8" Width="28" Height="28"/>
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <Rectangle Width="2" Height="10" Fill="#67E8F9" Margin="1,0"/>
+                                                                <Rectangle Width="2" Height="16" Fill="#E879F9" Margin="1,0"/>
+                                                                <Rectangle Width="2" Height="12" Fill="#38BDF8" Margin="1,0"/>
+                                                                <Rectangle Width="2" Height="18" Fill="#A855F7" Margin="1,0"/>
+                                                                <Rectangle Width="2" Height="9" Fill="#67E8F9" Margin="1,0"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Grid>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+                                                        <TextBlock Text="НОЧНАЯ ВОЛНА" FontSize="12" FontWeight="ExtraBold" Foreground="#F8FAFC" HorizontalAlignment="Right"/>
+                                                        <DockPanel ToolTip="{Binding Nightwave.SeasonExpiryHint}" Margin="0,1,0,0">
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Nightwave.TimeRemaining, StringFormat=' • ~{0}'}"
+                                                                       FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}"/>
+                                                            <TextBlock Text="{Binding Nightwave.SeasonTitle}" FontSize="10" Foreground="#C4CEDC"
+                                                                       TextTrimming="CharacterEllipsis" TextAlignment="Right"/>
+                                                        </DockPanel>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="NwBd" Property="BorderBrush" Value="#E2E8F0"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="4"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding RefreshWorldstateCommand}" Cursor="Hand" Height="28" ToolTip="Обновить живые данные Worldstate">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="BtnBd" Background="#EB090C11" BorderBrush="#4E5666" BorderThickness="1" Padding="5,0">
+                                                <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                                                    <TextBlock FontSize="9.5" FontWeight="SemiBold" Foreground="#DCE3EE" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="↻ ОБНОВИТЬ WORLDSTATE"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsRefreshing}" Value="True">
+                                                                        <Setter Property="Text" Value="⏳ ОБНОВЛЕНИЕ..."/>
+                                                                        <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Viewbox>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="BtnBd" Property="Background" Value="#1A212E"/>
+                                                    <Setter TargetName="BtnBd" Property="BorderBrush" Value="#B4BAC7"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <Border Grid.Column="2" Background="#EB090C11" BorderBrush="#4E5666" BorderThickness="1" Height="28" Padding="5,0"
+                                        ToolTip="Таймер до ежедневного (00:00 UTC) / еженедельного (пн 00:00 UTC) сброса">
+                                    <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                                        <TextBlock FontSize="9.5" FontWeight="SemiBold" Foreground="#C4CEDC" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Run Text="СБРОС: "/>
+                                            <Run Text="{Binding DailyResetRemaining, Mode=OneWay}" Foreground="{StaticResource BrushCyan}" FontWeight="Bold"/>
+                                            <Run Text=" / "/>
+                                            <Run Text="{Binding WeeklyResetRemaining, Mode=OneWay}" Foreground="{StaticResource BrushGoldBright}" FontWeight="Bold"/>
+                                        </TextBlock>
+                                    </Viewbox>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </Grid>
         </Grid>
 
         <!-- =============================================================== -->
-        <!-- LAYER 1A: TOP-RIGHT UNIFORM DOCKED BAR (ALWAYS ON TOP Z=25)     -->
+        <!-- LAYER 1A: TOP-RIGHT UNIFORM DOCKED BAR (338x38 EXACT, Z=25)     -->
         <!-- =============================================================== -->
         <Border Panel.ZIndex="25" HorizontalAlignment="Right" VerticalAlignment="Top"
-                Background="#EB090C11" BorderBrush="#6B7382" BorderThickness="1,1,1,1.5">
+                Height="38" Background="#EB090C11" BorderBrush="#6B7382" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
                 <!-- 1. Void Traders: Baro Ki'Teer & Varzia (NO NUMBER) -->
                 <RadioButton GroupName="NavHudTopTabs" Style="{StaticResource NavWorldIconButtonStyle}" Tag=""
@@ -626,73 +1003,9 @@
         </Border>
 
         <!-- =============================================================== -->
-        <!-- LAYER 1B: DUVIRI BANNER BUTTON BELOW TOP BAR (Z=15)             -->
-        <!-- =============================================================== -->
-        <RadioButton Panel.ZIndex="15" GroupName="NavHudTopTabs" Cursor="Hand" Width="310" Height="56" Margin="0,39,0,0"
-                     HorizontalAlignment="Right" VerticalAlignment="Top"
-                     IsChecked="{Binding ActiveHudPanel, Mode=OneWay, Converter={x:Static ctrl:StringEqualsConverter.Instance}, ConverterParameter=Duviri}"
-                     Command="{Binding SelectHudPanelCommand}" CommandParameter="Duviri"
-                     ToolTip="Открыть Спираль Дувири и ротации Цепи (Недели 1–9)">
-            <RadioButton.Template>
-                <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="DuvBd" BorderBrush="#636C7B" BorderThickness="1" ClipToBounds="True">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#1F2E28" Offset="0.0"/>
-                                <GradientStop Color="#151D29" Offset="0.52"/>
-                                <GradientStop Color="#0B0F17" Offset="1.0"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Grid>
-                            <Image Source="{Binding UiIconDuviriBanner}" Stretch="UniformToFill" Opacity="0.88"
-                                   Visibility="{Binding HasUiIconDuviriBanner, Converter={StaticResource BoolToVis}}"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <Border>
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#20080C12" Offset="0.0"/>
-                                        <GradientStop Color="#C4080C12" Offset="0.6"/>
-                                        <GradientStop Color="#EC080C12" Offset="1.0"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
-                            <Grid Margin="10,0,12,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0" Width="40" Height="40" VerticalAlignment="Center" Margin="0,0,10,0"
-                                      Visibility="{Binding HasUiIconDuviriBanner, Converter={StaticResource InverseBoolToVis}}">
-                                    <Ellipse Stroke="#88A899" StrokeThickness="1.4" Width="38" Height="38" Fill="#121D1A"/>
-                                    <Polygon Points="20,7 27,15 24,27 20,33 16,27 13,15" Stroke="#D4C79A" StrokeThickness="1.3" Fill="#1E2C27"/>
-                                    <Ellipse Fill="#67E8F9" Width="5" Height="5" VerticalAlignment="Top" Margin="0,16,0,0"/>
-                                </Grid>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                    <TextBlock Text="ДУВИРИ • РОТАЦИИ ЦЕПИ" FontSize="11.5" FontWeight="ExtraBold" Foreground="#F1F5F9" HorizontalAlignment="Right"/>
-                                    <TextBlock FontSize="9.5" HorizontalAlignment="Right" Margin="0,1,0,0">
-                                        <Run Text="{Binding DuviriMood.CurrentMood, Mode=OneWay}" Foreground="{StaticResource BrushCyan}"/>
-                                        <Run Text="{Binding DuviriMood.TimeRemaining, Mode=OneWay, StringFormat=' • {0}'}" Foreground="{StaticResource BrushGoldBright}"/>
-                                    </TextBlock>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="DuvBd" Property="BorderBrush" Value="#C8D0DC"/>
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="DuvBd" Property="BorderBrush" Value="#F1F5F9"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </RadioButton.Template>
-        </RadioButton>
-
-        <!-- =============================================================== -->
         <!-- LAYER 2: FLOATING OVERLAY DRAWER ("ОТКРЫВАЕТСЯ ПОВЕРХ")         -->
         <!-- =============================================================== -->
-        <Grid Panel.ZIndex="20" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,38,0,96"
+        <Grid Panel.ZIndex="20" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,46,0,96"
               Visibility="{Binding IsHudPanelOpen, Converter={StaticResource BoolToVis}}">
             <Border Background="#F7090C11" BorderBrush="#6F7887" BorderThickness="1">
                 <Border.Style>
@@ -1587,24 +1900,6 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
-                                                Visibility="{Binding HasDuviriCurrentNormalFrames, Converter={StaticResource BoolToVis}}">
-                                        <TextBlock Text="ОБЫЧНАЯ ЦЕПЬ: " FontSize="9" FontWeight="Bold" Foreground="#8B96A8" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <ItemsControl ItemsSource="{Binding DuviriCurrentNormalFrames}">
-                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#111722" BorderBrush="#2E3B50" BorderThickness="1" Padding="5,1.5" Margin="0,0,4,0">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Image Source="{Binding IconBitmap}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,4,0"
-                                                                   Visibility="{Binding HasLoadedIcon, Converter={StaticResource BoolToVis}}"/>
-                                                            <TextBlock Text="{Binding Name}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 
@@ -1638,7 +1933,7 @@
                                 <ItemsControl ItemsSource="{Binding FilteredDuviriRotations}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Padding="8,5" Margin="0,0,0,4" BorderThickness="1">
+                                            <Border Padding="9,6" Margin="0,0,0,5" BorderThickness="1">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Setter Property="Background" Value="#0E131B"/>
@@ -1652,65 +1947,83 @@
                                                     </Style>
                                                 </Border.Style>
                                                 <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="150"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding DateRange}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushGoldBright}" Margin="0,0,0,3"/>
-                                                        <ItemsControl ItemsSource="{Binding WarframeTiles}">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+
+                                                    <TextBlock Grid.Row="0" Text="{Binding DateRange}" FontSize="10.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource BrushGoldBright}" Margin="0,0,0,5"/>
+
+                                                    <Grid Grid.Row="1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!-- 3 Warframes: uniform 46x46 tiles (38x38 icon), identical size to Incarnons -->
+                                                        <ItemsControl Grid.Column="0" ItemsSource="{Binding WarframeTiles}" VerticalAlignment="Center">
                                                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
-                                                                    <Border Width="28" Height="28" Background="#090D14" BorderBrush="#283549" BorderThickness="1" Margin="0,0,3,0" ToolTip="{Binding Name}">
+                                                                    <Border Width="46" Height="46" Background="#090D14" BorderBrush="#283549" BorderThickness="1" Margin="0,0,4,0" ToolTip="{Binding Name}">
                                                                         <Grid>
-                                                                            <Image Source="{Binding IconBitmap}" Width="24" Height="24" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                            <TextBlock Text="{Binding ShortLabel}" FontSize="7" Foreground="{StaticResource BrushTextMuted}"
-                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                            <Image Source="{Binding IconBitmap}" Width="38" Height="38" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                            <TextBlock Text="{Binding ShortLabel}" FontSize="8" Foreground="{StaticResource BrushTextMuted}"
+                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
                                                                                        Visibility="{Binding HasLoadedIcon, Converter={StaticResource InverseBoolToVis}}"/>
                                                                         </Grid>
                                                                     </Border>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
                                                         </ItemsControl>
-                                                    </StackPanel>
-                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding IncarnonTiles}" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border MinWidth="46" Height="32" Padding="3,1" Background="#0C131E" BorderBrush="#2A3E58" BorderThickness="1" Margin="3,0,0,2" ToolTip="{Binding Name}">
-                                                                    <Grid>
-                                                                        <Image Source="{Binding IconBitmap}" Width="32" Height="26" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                        <TextBlock Text="{Binding Name}" FontSize="7.5" FontWeight="SemiBold" Foreground="{StaticResource BrushCyan}"
-                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
-                                                                                   Visibility="{Binding HasLoadedIcon, Converter={StaticResource InverseBoolToVis}}"/>
-                                                                    </Grid>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <Button Grid.Column="2" Command="{Binding DataContext.ToggleIncarnonBookmarkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}" Cursor="Hand" VerticalAlignment="Center" Margin="5,0,0,0" ToolTip="Закладка">
-                                                        <Button.Template>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <Border Background="#131924" BorderBrush="#2C3B50" BorderThickness="1" Padding="5,3">
-                                                                    <TextBlock FontSize="10.5" Text="★">
-                                                                        <TextBlock.Style>
-                                                                            <Style TargetType="TextBlock">
-                                                                                <Setter Property="Foreground" Value="#63748C"/>
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding HasUserBookmark}" Value="True">
-                                                                                        <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </TextBlock.Style>
-                                                                    </TextBlock>
-                                                                </Border>
-                                                            </ControlTemplate>
-                                                        </Button.Template>
-                                                    </Button>
+
+                                                        <!-- 5 Incarnons: uniform 46x46 tiles (38x38 icon), identical size to Warframes -->
+                                                        <ItemsControl Grid.Column="1" ItemsSource="{Binding IncarnonTiles}" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Width="46" Height="46" Background="#0C131E" BorderBrush="#2A3E58" BorderThickness="1" Margin="4,0,0,0" ToolTip="{Binding Name}">
+                                                                        <Grid>
+                                                                            <Image Source="{Binding IconBitmap}" Width="38" Height="38" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                            <TextBlock Text="{Binding Name}" FontSize="7.5" FontWeight="SemiBold" Foreground="{StaticResource BrushCyan}"
+                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                                                                                       Visibility="{Binding HasLoadedIcon, Converter={StaticResource InverseBoolToVis}}"/>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+
+                                                        <!-- Bookmark button matched to exact 46px tile height -->
+                                                        <Button Grid.Column="2" Command="{Binding DataContext.ToggleIncarnonBookmarkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}" Cursor="Hand" VerticalAlignment="Center" Margin="8,0,0,0" ToolTip="Закладка">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border x:Name="BmBd" Width="30" Height="46" Background="#131924" BorderBrush="#2C3B50" BorderThickness="1">
+                                                                        <TextBlock FontSize="12" Text="★" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Foreground" Value="#63748C"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding HasUserBookmark}" Value="True">
+                                                                                            <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="BmBd" Property="BorderBrush" Value="#8E9AB0"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
+                                                    </Grid>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -1722,108 +2035,6 @@
                 </Grid>
             </Border>
         </Grid>
-
-        <!-- =============================================================== -->
-        <!-- LAYER 1C: BOTTOM-RIGHT NIGHTWAVE BANNER + ACTION STRIP          -->
-        <!-- =============================================================== -->
-        <StackPanel Panel.ZIndex="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="360">
-            <Button Command="{Binding ToggleNightwaveCommand}" Cursor="Hand" Height="56" ToolTip="Открыть окно Ночной Волны">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="NwBd" BorderBrush="#5F6777" BorderThickness="1" ClipToBounds="True">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#1F1634" Offset="0.0"/>
-                                    <GradientStop Color="#121420" Offset="0.45"/>
-                                    <GradientStop Color="#0B0D12" Offset="1.0"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Grid>
-                                <Path Data="M60,28 Q95,12 130,28 T200,28 T270,28 T340,28" Stroke="#2D3D5A" StrokeThickness="1.3" Opacity="0.5"/>
-                                <Grid Margin="10,0,12,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Grid.Column="0" Width="44" Height="44" VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <Image Source="{Binding UiIconNightwave}" Stretch="Uniform"
-                                               Visibility="{Binding HasUiIconNightwave, Converter={StaticResource BoolToVis}}"/>
-                                        <Grid Visibility="{Binding HasUiIconNightwave, Converter={StaticResource InverseBoolToVis}}">
-                                            <Ellipse Stroke="#C084FC" StrokeThickness="1.5" StrokeDashArray="3,2" Width="42" Height="42" Opacity="0.7"/>
-                                            <Ellipse Fill="#0E121B" Stroke="#67E8F9" StrokeThickness="1.8" Width="30" Height="30"/>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <Rectangle Width="2" Height="11" Fill="#67E8F9" Margin="1,0"/>
-                                                <Rectangle Width="2" Height="17" Fill="#E879F9" Margin="1,0"/>
-                                                <Rectangle Width="2" Height="13" Fill="#38BDF8" Margin="1,0"/>
-                                                <Rectangle Width="2" Height="19" Fill="#A855F7" Margin="1,0"/>
-                                                <Rectangle Width="2" Height="10" Fill="#67E8F9" Margin="1,0"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
-                                        <TextBlock Text="НОЧНАЯ ВОЛНА" FontSize="12.5" FontWeight="ExtraBold" Foreground="#F8FAFC" HorizontalAlignment="Right"/>
-                                        <DockPanel ToolTip="{Binding Nightwave.SeasonExpiryHint}" Margin="0,1,0,0">
-                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Nightwave.TimeRemaining, StringFormat=' • ~{0}'}"
-                                                       FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushGoldBright}"/>
-                                            <TextBlock Text="{Binding Nightwave.SeasonTitle}" FontSize="10" Foreground="#C4CEDC"
-                                                       TextTrimming="CharacterEllipsis" TextAlignment="Right"/>
-                                        </DockPanel>
-                                    </StackPanel>
-                                </Grid>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="NwBd" Property="BorderBrush" Value="#E2E8F0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-
-            <Grid Margin="0,4,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="4"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Command="{Binding RefreshWorldstateCommand}" Cursor="Hand" Height="27" ToolTip="Обновить живые данные Worldstate">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="BtnBd" Background="#EB090C11" BorderBrush="#4E5666" BorderThickness="1">
-                                <TextBlock FontSize="9.5" FontWeight="SemiBold" Foreground="#DCE3EE" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="↻ ОБНОВИТЬ WORLDSTATE"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsRefreshing}" Value="True">
-                                                    <Setter Property="Text" Value="⏳ ОБНОВЛЕНИЕ..."/>
-                                                    <Setter Property="Foreground" Value="{StaticResource BrushGoldBright}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="BtnBd" Property="Background" Value="#1A212E"/>
-                                    <Setter TargetName="BtnBd" Property="BorderBrush" Value="#B4BAC7"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-                <Border Grid.Column="2" Background="#EB090C11" BorderBrush="#4E5666" BorderThickness="1" Height="27">
-                    <TextBlock FontSize="9.5" FontWeight="SemiBold" Foreground="#C4CEDC" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Run Text="СБРОС: "/>
-                        <Run Text="{Binding DailyResetRemaining, Mode=OneWay}" Foreground="{StaticResource BrushCyan}" FontWeight="Bold"/>
-                        <Run Text=" / "/>
-                        <Run Text="{Binding WeeklyResetRemaining, Mode=OneWay}" Foreground="{StaticResource BrushGoldBright}" FontWeight="Bold"/>
-                    </TextBlock>
-                </Border>
-            </Grid>
-        </StackPanel>
 
         <!-- =============================================================== -->
         <!-- LAYER 3: NIGHTWAVE MODAL OVERLAY (WARFRAME IN-GAME STYLE)       -->
@@ -1932,7 +2143,7 @@
                                     </Grid>
                                     <StackPanel VerticalAlignment="Center" MaxWidth="470">
                                         <TextBlock Text="{Binding Nightwave.SeasonTitle}" FontSize="12.5" FontWeight="Bold" Foreground="#F8FAFC" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="РАНГИ СЕЗОНА 1–30 • КРУТИТЕ КОЛЁСИКОМ ДЛЯ ПРОКРУТКИ ЛЕНТЫ НАГРАД" FontSize="9" Foreground="#B4C0D4"/>
+                                        <TextBlock Text="РАНГИ СЕЗОНА 1–30" FontSize="9" Foreground="#B4C0D4"/>
                                     </StackPanel>
                                 </StackPanel>
 
@@ -1963,12 +2174,9 @@
                             </Grid>
                         </Border>
 
-                        <!-- TOP HORIZONTAL RANK REWARDS RIBBON (LEVELS 1-30 ONLY, HORIZONTAL MOUSE WHEEL SCROLL) -->
+                        <!-- TOP HORIZONTAL RANK REWARDS RIBBON (LEVELS 1-30 ONLY) -->
                         <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                            <DockPanel Margin="0,0,0,5">
-                                <TextBlock DockPanel.Dock="Right" Text="◀ КОЛЁСИКО МЫШИ ▶" FontSize="9" FontWeight="SemiBold" Foreground="#7A889E" VerticalAlignment="Center"/>
-                                <TextBlock Text="НАГРАДЫ РАНГОВ СЕЗОНА (1–30)" FontSize="10.5" FontWeight="Bold" Foreground="#CBD5E1"/>
-                            </DockPanel>
+                            <TextBlock Text="НАГРАДЫ РАНГОВ СЕЗОНА (1–30)" FontSize="10.5" FontWeight="Bold" Foreground="#CBD5E1" Margin="0,0,0,5"/>
 
                             <ScrollViewer x:Name="NightwaveRewardsScrollViewer"
                                           HorizontalScrollBarVisibility="Auto"

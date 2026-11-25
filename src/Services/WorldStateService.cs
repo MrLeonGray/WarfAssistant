@@ -187,6 +187,9 @@ namespace WarfAssistant.Services
             public string? NightwaveTag { get; set; }
             public int? NightwavePhase { get; set; }
             public List<NightwaveChallenge> NightwaveChallenges { get; } = new();
+
+            public DateTime? DescendiaExpiryUtc { get; set; }
+            public List<DescendiaChallengeItem> DescendiaChallenges { get; } = new();
         }
 
         public static string ResolveFissureRegion(string planet, string node, bool isStorm)
@@ -547,6 +550,62 @@ namespace WarfAssistant.Services
                                 ExpiryUtc = chExp.Value
                             });
                         }
+                    }
+                }
+
+                // Live Descendia (Descents)
+                if (root.TryGetProperty("Descents", out var descArr) && descArr.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var dEl in descArr.EnumerateArray())
+                    {
+                        DateTime? dAct = ParseDeUnixTimestamp(dEl, "Activation");
+                        DateTime? dExp = ParseDeUnixExpiry(dEl);
+                        if (!dExp.HasValue || dExp.Value <= utcNow) continue;
+                        if (dAct.HasValue && dAct.Value > utcNow) continue;
+
+                        result.DescendiaExpiryUtc = dExp.Value;
+                        if (dEl.TryGetProperty("Challenges", out var chArr) && chArr.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var ch in chArr.EnumerateArray())
+                            {
+                                int floorIdx = ch.TryGetProperty("Index", out var ix) ? ix.GetInt32() : 0;
+                                string rawType = GetStr(ch, "Type");
+                                string missionRu = TranslateMission(rawType);
+                                string rawCh = GetStr(ch, "Challenge");
+                                string spacedCh = System.Text.RegularExpressions.Regex.Replace(
+                                    rawCh.Replace("NC_", ""), "([a-z])([A-Z])", "$1 $2");
+                                string chName = rawCh.Equals("Devil", StringComparison.OrdinalIgnoreCase)
+                                    ? "Уриэль (Дьявол)"
+                                    : Instance.TranslateEnToRu(spacedCh);
+
+                                var auras = new List<string>();
+                                if (ch.TryGetProperty("Auras", out var aArr) && aArr.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var aEl in aArr.EnumerateArray())
+                                    {
+                                        string tail = (aEl.GetString() ?? "").Split('/').LastOrDefault() ?? "";
+                                        tail = tail.Replace("CoH", "").Replace("EnhancementAura", "").Replace("Aura", "");
+                                        if (!string.IsNullOrWhiteSpace(tail))
+                                            auras.Add(System.Text.RegularExpressions.Regex.Replace(tail, "([a-z])([A-Z])", "$1 $2"));
+                                    }
+                                }
+
+                                string tip = $"Этаж #{floorIdx} • {missionRu}\nИспытание: {chName}";
+                                if (floorIdx == 7 || floorIdx == 14) tip += "\nКонтрольная точка (Протофрейм)";
+                                else if (floorIdx == 21) tip += "\nФинальный босс Спуска";
+                                if (auras.Count > 0) tip += $"\nМодификатор: {string.Join(", ", auras)}";
+
+                                result.DescendiaChallenges.Add(new DescendiaChallengeItem
+                                {
+                                    Index = floorIdx,
+                                    MissionType = missionRu,
+                                    ChallengeName = chName,
+                                    IsMiniBoss = rawType.Equals("DT_BOSS", StringComparison.OrdinalIgnoreCase),
+                                    DetailTooltip = tip
+                                });
+                            }
+                        }
+                        break;
                     }
                 }
 
@@ -1100,8 +1159,13 @@ namespace WarfAssistant.Services
         public static string TranslateMission(string en)
         {
             if (string.IsNullOrWhiteSpace(en)) return string.Empty;
-            string cleaned = en
-                .Replace("D T_", "", StringComparison.OrdinalIgnoreCase)
+            string cleaned = en;
+            // Handle warframestat spaced codes like "D T_ E X C A V A T I O N"
+            if (cleaned.StartsWith("D T_", StringComparison.OrdinalIgnoreCase))
+            {
+                cleaned = cleaned.Replace(" ", "");
+            }
+            cleaned = cleaned
                 .Replace("DT_", "", StringComparison.OrdinalIgnoreCase)
                 .Replace("_", " ")
                 .Trim();
@@ -1138,6 +1202,12 @@ namespace WarfAssistant.Services
                 "CORRUPTION" or "SHRINE DEFENSE" => "Защита Святилища",
                 "LOOT CREATURES" => "Сбор добычи",
                 "DEEP MINES" => "Глубокие Шахты",
+                "PRESURE GAUGE" or "PRESSURE GAUGE" => "Давление",
+                "PROTOFRAME" => "Протофрейм",
+                "RACE" => "Гонка",
+                "MIMICS" => "Мимики",
+                "BOSS" => "Босс",
+                "BREAK TARGETS" => "Уничтожение целей",
                 _ => Instance.TranslateEnToRu(cleaned)
             };
         }

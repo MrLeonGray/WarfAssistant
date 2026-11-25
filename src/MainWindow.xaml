@@ -12,6 +12,8 @@
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BrushBgDeep}"
         Foreground="{StaticResource BrushTextPrimary}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         WindowStyle="None"
         AllowsTransparency="False">
 
@@ -216,11 +218,11 @@
                         </RadioButton>
                     </StackPanel>
 
-                    <!-- Bottom Quick Profile Card + Live MR Progress Bar -->
-                    <Border Grid.Row="2" Background="{StaticResource BrushBgCard}" 
+                    <!-- Bottom Quick Profile Card + Live MR Progress Bar (aligned to 96px horizon of Nightwave/Simaris bottom strip) -->
+                    <Border Grid.Row="2" Height="96" Background="{StaticResource BrushBgCard}" 
                             BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,1,0,0" 
-                            Padding="12,10">
-                        <StackPanel>
+                            Padding="12,0">
+                        <StackPanel VerticalAlignment="Center">
                             <Grid Margin="0,0,0,4">
                                 <TextBlock Text="{Binding PlayerName}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis" MaxWidth="135"/>
                                 <TextBlock Text="{Binding MasterySummary.CurrentRankNumber, StringFormat='MR {0}'}" HorizontalAlignment="Right" FontSize="11" FontWeight="ExtraBold" Foreground="{StaticResource BrushGoldBright}"/>

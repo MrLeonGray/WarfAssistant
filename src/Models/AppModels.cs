@@ -453,7 +453,7 @@ namespace WarfAssistant.Models
             _iconBitmap = bmp;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IconBitmap)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasLoadedIcon)));
-        }, decodeWidth: 72);
+        }, decodeWidth: 96);
     }
 
     public class DuviriRotationWeek : INotifyPropertyChanged
@@ -1577,6 +1577,7 @@ namespace WarfAssistant.Models
         public string DeviationName { get; set; } = string.Empty;
         public string DeviationDesc { get; set; } = string.Empty;
         public string RisksSummary { get; set; } = string.Empty;
+        public List<string> Risks { get; } = new();
     }
 
     public class ArchimedeaPersonalModModel
@@ -1609,6 +1610,15 @@ namespace WarfAssistant.Models
         public int Index { get; set; }
         public string MissionType { get; set; } = string.Empty;
         public string ChallengeName { get; set; } = string.Empty;
+        public bool IsMiniBoss { get; set; }
+        public string DetailTooltip { get; set; } = string.Empty;
+        public bool IsCheckpoint => Index == 7 || Index == 14;
+        public bool IsFinalBoss => Index == 21;
+        public string BadgeLabel => IsFinalBoss ? "ФИНАЛ" : (IsCheckpoint ? "ЧЕКПОИНТ" : (IsMiniBoss ? "БОСС" : string.Empty));
+        public bool HasBadge => !string.IsNullOrEmpty(BadgeLabel);
+        public string RowBackground => IsFinalBoss ? "#241118" : (IsCheckpoint ? "#101E28" : (IsMiniBoss ? "#21190F" : "#0B0F17"));
+        public string RowBorder => IsFinalBoss ? "#9F2B47" : (IsCheckpoint ? "#286680" : (IsMiniBoss ? "#78571E" : "#1E2838"));
+        public string BadgeColor => IsFinalBoss ? "#FB7185" : (IsCheckpoint ? "#38BDF8" : "#F59E0B");
     }
 
     public class DescendiaModel : INotifyPropertyChanged

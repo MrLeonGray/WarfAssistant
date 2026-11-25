@@ -82,6 +82,25 @@ namespace WarfAssistant.ViewModels
             set => SetProperty(ref _leftWorkspaceTab, value);
         }
 
+        private string _endgameSubTab = "Archimedea"; // "Archimedea", "Descendia", "Calendar", "SteelPath"
+        public string EndgameSubTab
+        {
+            get => _endgameSubTab;
+            set
+            {
+                if (SetProperty(ref _endgameSubTab, value))
+                    OnPropertyChanged(nameof(ActiveEndgameTimeRemaining));
+            }
+        }
+
+        public string ActiveEndgameTimeRemaining => _endgameSubTab switch
+        {
+            "Descendia" => Descendia.TimeRemaining,
+            "Calendar" => HexCalendar.TimeRemaining,
+            "SteelPath" => SteelPath.TimeRemaining,
+            _ => Archimedeas.FirstOrDefault()?.TimeRemaining ?? WeeklyResetRemaining
+        };
+
         private bool _isNightwaveOpen;
         public bool IsNightwaveOpen
         {
@@ -315,6 +334,7 @@ namespace WarfAssistant.ViewModels
         public ICommand SelectHudPanelCommand { get; }
         public ICommand CloseHudPanelCommand { get; }
         public ICommand SwitchLeftTabCommand { get; }
+        public ICommand SwitchEndgameSubTabCommand { get; }
         public ICommand ToggleNightwaveCommand { get; }
         public ICommand CloseNightwaveCommand { get; }
         public ICommand SwitchNightwaveTabCommand { get; }
@@ -351,6 +371,7 @@ namespace WarfAssistant.ViewModels
             });
             CloseHudPanelCommand = new RelayCommand(() => ActiveHudPanel = "None");
             SwitchLeftTabCommand = new RelayCommand(p => { if (p is string tab) LeftWorkspaceTab = tab; });
+            SwitchEndgameSubTabCommand = new RelayCommand(p => { if (p is string tab) EndgameSubTab = tab; });
             ToggleNightwaveCommand = new RelayCommand(() =>
             {
                 if (!IsNightwaveOpen) NightwaveTab = "Acts";
@@ -642,11 +663,11 @@ namespace WarfAssistant.ViewModels
 
             var savedMoods = StorageService.Instance.LoadTrackedMoods();
             DuviriMoodOptions.Clear();
-            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "sorrow", NameRu = "Печаль", BuffShort = "Холод / Замедление • Кликните для отслеживания", IsTracked = savedMoods.Contains("sorrow"), OnChangedCallback = OnDuviriMoodOptionChanged });
-            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "anger", NameRu = "Гнев", BuffShort = "Огонь / Поджоги • Кликните для отслеживания", IsTracked = savedMoods.Contains("anger"), OnChangedCallback = OnDuviriMoodOptionChanged });
-            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "joy", NameRu = "Радость", BuffShort = "Лечение / Реген • Кликните для отслеживания", IsTracked = savedMoods.Contains("joy"), OnChangedCallback = OnDuviriMoodOptionChanged });
-            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "envy", NameRu = "Зависть", BuffShort = "Токсин / Вампиризм • Кликните для отслеживания", IsTracked = savedMoods.Contains("envy"), OnChangedCallback = OnDuviriMoodOptionChanged });
-            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "fear", NameRu = "Страх", BuffShort = "Электро / Стан • Кликните для отслеживания", IsTracked = savedMoods.Contains("fear"), OnChangedCallback = OnDuviriMoodOptionChanged });
+            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "sorrow", NameRu = "Печаль", BuffShort = "Холод / Замедление", IsTracked = savedMoods.Contains("sorrow"), OnChangedCallback = OnDuviriMoodOptionChanged });
+            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "anger", NameRu = "Гнев", BuffShort = "Огонь / Поджоги", IsTracked = savedMoods.Contains("anger"), OnChangedCallback = OnDuviriMoodOptionChanged });
+            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "joy", NameRu = "Радость", BuffShort = "Лечение / Реген", IsTracked = savedMoods.Contains("joy"), OnChangedCallback = OnDuviriMoodOptionChanged });
+            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "envy", NameRu = "Зависть", BuffShort = "Токсин / Вампиризм", IsTracked = savedMoods.Contains("envy"), OnChangedCallback = OnDuviriMoodOptionChanged });
+            DuviriMoodOptions.Add(new DuviriMoodTrackOption { Key = "fear", NameRu = "Страх", BuffShort = "Электро / Стан", IsTracked = savedMoods.Contains("fear"), OnChangedCallback = OnDuviriMoodOptionChanged });
             CheckDuviriMoodTracking();
 
             BuildDuviriRotationSchedule();
@@ -1174,6 +1195,14 @@ namespace WarfAssistant.ViewModels
                 Nightwave.RefreshAll();
             }
 
+            if (de.DescendiaExpiryUtc.HasValue && de.DescendiaChallenges.Count > 0)
+            {
+                Descendia.ExpiryUtc = de.DescendiaExpiryUtc.Value;
+                Descendia.Challenges.Clear();
+                foreach (var ch in de.DescendiaChallenges) Descendia.Challenges.Add(ch);
+                Descendia.RefreshAll();
+            }
+
             NotifyHudCountsChanged();
         }
 
@@ -1528,7 +1557,7 @@ namespace WarfAssistant.ViewModels
                             }
                         }
 
-                        model.Missions.Add(new ArchimedeaMissionModel
+                        var missionModel = new ArchimedeaMissionModel
                         {
                             Index = idx++,
                             MissionType = WorldStateService.TranslateMission(WorldStateService.GetStr(m, "missionType")),
@@ -1536,7 +1565,9 @@ namespace WarfAssistant.ViewModels
                             DeviationName = devName,
                             DeviationDesc = devDesc,
                             RisksSummary = riskList.Count > 0 ? string.Join(" • ", riskList) : ""
-                        });
+                        };
+                        foreach (var rk in riskList) missionModel.Risks.Add(rk);
+                        model.Missions.Add(missionModel);
                     }
                 }
 
@@ -1564,11 +1595,37 @@ namespace WarfAssistant.ViewModels
             {
                 foreach (var ch in chArr.EnumerateArray())
                 {
+                    int floorIdx = ch.TryGetProperty("index", out var ix) ? ix.GetInt32() : 0;
+                    string rawTypeKey = WorldStateService.GetStr(ch, "typeKey");
+                    string rawType = !string.IsNullOrEmpty(rawTypeKey) ? rawTypeKey : WorldStateService.GetStr(ch, "type");
+                    string missionRu = WorldStateService.TranslateMission(rawType);
+                    string rawChallenge = WorldStateService.GetStr(ch, "challenge");
+                    string chName = rawChallenge.Equals("Devil", StringComparison.OrdinalIgnoreCase)
+                        ? "Уриэль (Дьявол)"
+                        : WorldStateService.Instance.TranslateEnToRu(rawChallenge);
+
+                    var auraNames = new List<string>();
+                    if (ch.TryGetProperty("auras", out var aurasArr) && aurasArr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var au in aurasArr.EnumerateArray())
+                        {
+                            string an = WorldStateService.GetStr(au, "name").Replace("Co H ", "").Trim();
+                            if (!string.IsNullOrEmpty(an)) auraNames.Add(an);
+                        }
+                    }
+
+                    string tip = $"Этаж #{floorIdx} • {missionRu}\nИспытание: {chName}";
+                    if (floorIdx == 7 || floorIdx == 14) tip += "\nКонтрольная точка (Протофрейм)";
+                    else if (floorIdx == 21) tip += "\nФинальный босс Спуска";
+                    if (auraNames.Count > 0) tip += $"\nМодификатор: {string.Join(", ", auraNames)}";
+
                     Descendia.Challenges.Add(new DescendiaChallengeItem
                     {
-                        Index = ch.TryGetProperty("index", out var ix) ? ix.GetInt32() : 0,
-                        MissionType = WorldStateService.TranslateMission(WorldStateService.GetStr(ch, "type")),
-                        ChallengeName = WorldStateService.Instance.TranslateEnToRu(WorldStateService.GetStr(ch, "challenge"))
+                        Index = floorIdx,
+                        MissionType = missionRu,
+                        ChallengeName = chName,
+                        IsMiniBoss = rawTypeKey.Equals("DT_BOSS", StringComparison.OrdinalIgnoreCase),
+                        DetailTooltip = tip
                     });
                 }
             }
@@ -2189,6 +2246,7 @@ namespace WarfAssistant.ViewModels
             Descendia.TimeRemaining = FormatTimeSpan(Descendia.ExpiryUtc - utcNow);
             HexCalendar.TimeRemaining = FormatTimeSpan(HexCalendar.ExpiryUtc - utcNow);
             SteelPath.TimeRemaining = FormatTimeSpan(SteelPath.ExpiryUtc - utcNow);
+            OnPropertyChanged(nameof(ActiveEndgameTimeRemaining));
 
             bool wasBaroActive = Baro.IsActive;
             bool nowBaroActive = utcNow >= Baro.ActivationUtc && utcNow < Baro.ExpiryUtc;
