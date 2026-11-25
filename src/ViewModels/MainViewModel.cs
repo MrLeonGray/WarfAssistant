@@ -409,11 +409,11 @@ namespace WarfAssistant.ViewModels
             string compact = name.Replace(" ", "").Replace("-", "").Trim();
             return compact.ToLowerInvariant() switch
             {
-                "braton" => "Брейтон",
+                "braton" => "Брэйтон",
                 "lato" => "Лато",
                 "skana" => "Скана",
                 "paris" => "Парис",
-                "kunai" => "Кунай",
+                "kunai" => "Кунаи",
                 "boar" => "Вепрь",
                 "gammacor" => "Гаммакор",
                 "angstrum" => "Ангстрем",

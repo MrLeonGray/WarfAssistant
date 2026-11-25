@@ -64,10 +64,8 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Center Drag Area / Info -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="🛡 БЕЗОПАСНЫЙ РЕЖИМ (БЕЗ ЧТЕНИЯ ПАМЯТИ И ИНЖЕКТА)" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushSuccessGreen}"/>
-                </StackPanel>
+                <!-- Center Drag Area -->
+                <Border Grid.Column="1" Background="Transparent"/>
 
                 <!-- Window Control Buttons (Minimize, Maximize, Close) -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True">

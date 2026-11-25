@@ -58,14 +58,15 @@ namespace WarfAssistant.Services
             return null;
         }
 
-        public static async Task<string?> GetStringAsync(string url)
+        public static async Task<string?> GetStringAsync(string url, int timeoutSeconds = 15)
         {
             try
             {
-                using var response = await _http.GetAsync(url).ConfigureAwait(false);
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+                using var response = await _http.GetAsync(url, cts.Token).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    return await response.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
                 }
             }
             catch { }

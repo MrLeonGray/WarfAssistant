@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using WarfAssistant.Models;
 using WarfAssistant.Services;
 
@@ -38,12 +39,110 @@ namespace WarfAssistant.ViewModels
         private string? _regalAyaIconUrl;
         private string? _nightwaveCredIconUrl;
 
-        private string _subTab = "Timers"; // "Timers", "Activities", "Missions", "Operations", "Nightwave"
+        private string _subTab = "Timers"; // Legacy compatibility
         public string EventsSubTab
         {
             get => _subTab;
             set => SetProperty(ref _subTab, value);
         }
+
+        private string _activeHudPanel = "None"; // "Traders", "Events", "Alerts", "Invasions", "Fissures", "Sortie", "Archon", "Duviri", "None"
+        public string ActiveHudPanel
+        {
+            get => _activeHudPanel;
+            set
+            {
+                if (SetProperty(ref _activeHudPanel, value))
+                {
+                    OnPropertyChanged(nameof(IsHudPanelOpen));
+                    OnPropertyChanged(nameof(ActiveHudPanelTitle));
+                }
+            }
+        }
+
+        public bool IsHudPanelOpen => !string.Equals(_activeHudPanel, "None", StringComparison.OrdinalIgnoreCase);
+
+        public string ActiveHudPanelTitle => _activeHudPanel switch
+        {
+            "Traders" => "ТОРГОВЦЫ БЕЗДНЫ: БАРО КИ'ТИИР И ВАРЗИЯ",
+            "Events" => "СОБЫТИЯ, БУСТЕРЫ И СКИДКИ",
+            "Alerts" => "СИГНАЛЫ ТРЕВОГИ",
+            "Invasions" => "ВТОРЖЕНИЯ И УГРОЗЫ СИСТЕМЕ",
+            "Fissures" => "РАЗРЫВЫ БЕЗДНЫ",
+            "Sortie" => "ВЫЛАЗКА ДНЯ",
+            "Archon" => "ОХОТА НА АРХОНТА",
+            "Duviri" => "ДУВИРИ — СПИРАЛЬ И РОТАЦИИ ЦЕПИ",
+            _ => "СТАТУС МИРА"
+        };
+
+        private string _leftWorkspaceTab = "Endgame"; // "Endgame", "News" (kept for compatibility)
+        public string LeftWorkspaceTab
+        {
+            get => _leftWorkspaceTab;
+            set => SetProperty(ref _leftWorkspaceTab, value);
+        }
+
+        private bool _isNightwaveOpen;
+        public bool IsNightwaveOpen
+        {
+            get => _isNightwaveOpen;
+            set => SetProperty(ref _isNightwaveOpen, value);
+        }
+
+        private string _nightwaveTab = "Acts"; // "Acts", "Shop"
+        public string NightwaveTab
+        {
+            get => _nightwaveTab;
+            set
+            {
+                if (SetProperty(ref _nightwaveTab, value))
+                    OnPropertyChanged(nameof(NightwaveHeaderTitle));
+            }
+        }
+
+        public string NightwaveHeaderTitle => string.Equals(_nightwaveTab, "Shop", StringComparison.OrdinalIgnoreCase)
+            ? "НОЧНАЯ ВОЛНА / ПРЕДЛОЖЕНИЯ ЗА ДОВЕРИЕ"
+            : "НОЧНАЯ ВОЛНА / ДЕЯНИЯ";
+
+        public int HudEventsCount => GlobalBoosters.Count + Operations.Count + (DarvoDeal.HasDeal ? 1 : 0);
+        public int HudAlertsCount => 1 + ActiveAlerts.Count + WeeklyChecklist.Count(w => !w.IsCompleted);
+        public int HudInvasionsCount => ActiveInvasions.Count;
+        public int HudFissuresCount => AllFissures.Count;
+        public int HudSortieCount => DailySortie.Stages.Count > 0 ? DailySortie.Stages.Count : 0;
+        public int HudArchonCount => ArchonHunt.Stages.Count > 0 ? 1 : 0;
+        public int HudTradersCount => Baro.IsActive ? 1 : 0;
+        public bool HasActiveAlertItems => ActiveAlerts.Count > 0;
+
+        public BitmapImage? CreditsIconBitmap { get; private set; }
+        public BitmapImage? UiIconNavEvents { get; private set; }
+        public BitmapImage? UiIconNavAlerts { get; private set; }
+        public BitmapImage? UiIconNavInvasions { get; private set; }
+        public BitmapImage? UiIconNavFissures { get; private set; }
+        public BitmapImage? UiIconNavSortie { get; private set; }
+        public BitmapImage? UiIconNavArchon { get; private set; }
+        public BitmapImage? UiIconNavTraders { get; private set; }
+        public BitmapImage? UiIconNightwave { get; private set; }
+        public BitmapImage? UiIconArbitrationHexis { get; private set; }
+        public BitmapImage? UiIconArbitrationBadge { get; private set; }
+        public BitmapImage? UiIconDuviriBanner { get; private set; }
+        public BitmapImage? UiIconFissureOrigin { get; private set; }
+        public BitmapImage? UiIconFissureSteelPath { get; private set; }
+        public BitmapImage? UiIconFissureProxima { get; private set; }
+
+        public bool HasUiIconNavEvents => UiIconNavEvents != null;
+        public bool HasUiIconNavAlerts => UiIconNavAlerts != null;
+        public bool HasUiIconNavInvasions => UiIconNavInvasions != null;
+        public bool HasUiIconNavFissures => UiIconNavFissures != null;
+        public bool HasUiIconNavSortie => UiIconNavSortie != null;
+        public bool HasUiIconNavArchon => UiIconNavArchon != null;
+        public bool HasUiIconNavTraders => UiIconNavTraders != null;
+        public bool HasUiIconNightwave => UiIconNightwave != null;
+        public bool HasUiIconArbitrationHexis => UiIconArbitrationHexis != null;
+        public bool HasUiIconArbitrationBadge => UiIconArbitrationBadge != null;
+        public bool HasUiIconDuviriBanner => UiIconDuviriBanner != null;
+        public bool HasUiIconFissureOrigin => UiIconFissureOrigin != null;
+        public bool HasUiIconFissureSteelPath => UiIconFissureSteelPath != null;
+        public bool HasUiIconFissureProxima => UiIconFissureProxima != null;
 
         private string _syncLabel = "Локальный кэш";
         public string SyncLabel
@@ -113,6 +212,13 @@ namespace WarfAssistant.ViewModels
         {
             get => _selectedFissureTier;
             set { if (SetProperty(ref _selectedFissureTier, value)) ApplyFissuresFilter(); }
+        }
+
+        private string _fissureCategoryFilter = "All"; // "All", "Origin", "SteelPath", "Proxima"
+        public string FissureCategoryFilter
+        {
+            get => _fissureCategoryFilter;
+            set { if (SetProperty(ref _fissureCategoryFilter, value)) ApplyFissuresFilter(); }
         }
 
         private string _fissureSteelPathMode = "All";
@@ -206,12 +312,19 @@ namespace WarfAssistant.ViewModels
 
         // Commands
         public ICommand SwitchSubTabCommand { get; }
+        public ICommand SelectHudPanelCommand { get; }
+        public ICommand CloseHudPanelCommand { get; }
+        public ICommand SwitchLeftTabCommand { get; }
+        public ICommand ToggleNightwaveCommand { get; }
+        public ICommand CloseNightwaveCommand { get; }
+        public ICommand SwitchNightwaveTabCommand { get; }
         public ICommand RefreshWorldstateCommand { get; }
         public ICommand ToggleCycleNotificationCommand { get; }
         public ICommand ToggleBaroNotifyCommand { get; }
         public ICommand ToggleMoodTrackCommand { get; }
         public ICommand ToggleIncarnonBookmarkCommand { get; }
         public ICommand FilterFissureTierCommand { get; }
+        public ICommand SetFissureCategoryCommand { get; }
         public ICommand SetFissureSteelPathModeCommand { get; }
         public ICommand SetFissureMissionTypeModeCommand { get; }
         public ICommand FilterFissureRegionCommand { get; }
@@ -226,6 +339,25 @@ namespace WarfAssistant.ViewModels
             _statusCallback = statusCallback;
 
             SwitchSubTabCommand = new RelayCommand(p => { if (p is string t) EventsSubTab = t; });
+            SelectHudPanelCommand = new RelayCommand(p =>
+            {
+                if (p is string panel)
+                {
+                    IsNightwaveOpen = false;
+                    ActiveHudPanel = string.Equals(ActiveHudPanel, panel, StringComparison.OrdinalIgnoreCase)
+                        ? "None"
+                        : panel;
+                }
+            });
+            CloseHudPanelCommand = new RelayCommand(() => ActiveHudPanel = "None");
+            SwitchLeftTabCommand = new RelayCommand(p => { if (p is string tab) LeftWorkspaceTab = tab; });
+            ToggleNightwaveCommand = new RelayCommand(() =>
+            {
+                if (!IsNightwaveOpen) NightwaveTab = "Acts";
+                IsNightwaveOpen = !IsNightwaveOpen;
+            });
+            CloseNightwaveCommand = new RelayCommand(() => IsNightwaveOpen = false);
+            SwitchNightwaveTabCommand = new RelayCommand(p => { if (p is string t) NightwaveTab = t; });
             RefreshWorldstateCommand = new RelayCommand(() => _ = FetchLiveWorldstateAsync(forceNotify: true));
 
             ToggleCycleNotificationCommand = new RelayCommand(p =>
@@ -271,6 +403,7 @@ namespace WarfAssistant.ViewModels
             });
 
             FilterFissureTierCommand = new RelayCommand(p => { if (p is string t) SelectedFissureTier = ToggleFilter(SelectedFissureTier, t); });
+            SetFissureCategoryCommand = new RelayCommand(p => { if (p is string c) FissureCategoryFilter = ToggleFilter(FissureCategoryFilter, c); });
             SetFissureSteelPathModeCommand = new RelayCommand(p => { if (p is string m) FissureSteelPathMode = ToggleFilter(FissureSteelPathMode, m); });
             SetFissureMissionTypeModeCommand = new RelayCommand(p => { if (p is string m) FissureMissionTypeMode = ToggleFilter(FissureMissionTypeMode, m); });
             FilterFissureRegionCommand = new RelayCommand(p =>
@@ -417,6 +550,7 @@ namespace WarfAssistant.ViewModels
                         int rank = r.TryGetProperty("rank", out var rk) ? rk.GetInt32() : 1;
                         int cnt = r.TryGetProperty("count", out var ct) ? ct.GetInt32() : 1;
                         bool isPrest = r.TryGetProperty("isPrestige", out var ip) && ip.ValueKind == JsonValueKind.True;
+                        if (isPrest || rank > 30) continue;
                         string rName = WorldStateService.GetStr(r, "name");
                         string icon = WorldStateService.GetStr(r, "icon");
                         Nightwave.RankRewards.Add(new NightwaveRewardRank
@@ -489,6 +623,7 @@ namespace WarfAssistant.ViewModels
         public void InitializeDefaults()
         {
             LoadEventsSeed();
+            LoadUiIcons();
             DateTime now = DateTime.UtcNow;
             var notifySet = StorageService.Instance.LoadCycleNotifications();
             Baro.NotifyEnabled = notifySet.Contains("baro");
@@ -525,9 +660,11 @@ namespace WarfAssistant.ViewModels
                 ApplyVarziaFilter();
             }
 
-            // Default Tauforged Archon Shard icon before first sync
+            // Default Archon Shard base crystal + Tauforged glow overlay before first sync
+            var (defBaseUrl, defGlowUrl) = WorldStateService.GetArchonShardIconUrls("boreal");
+            ArchonHunt.ShardBaseIconUrl = ImageCacheService.NormalizeImageUrl(defBaseUrl);
             ArchonHunt.ShardIconUrl = ImageCacheService.NormalizeImageUrl(
-                _archonIconPaths.GetValueOrDefault("boreal", WorldStateService.GetArchonShardIconPath("boreal")));
+                _archonIconPaths.GetValueOrDefault("boreal", defGlowUrl));
 
             // Immediately hydrate last saved Worldstate snapshot if present on disk (0ms offline startup)
             string? cached = WorldStateService.Instance.LoadCachedWorldstateOnly();
@@ -542,12 +679,117 @@ namespace WarfAssistant.ViewModels
                 catch { }
             }
             Tick(now, suppressNotifications: true);
+            NotifyHudCountsChanged();
+        }
+
+        private void LoadUiIcons()
+        {
+            string? credPath = MainViewModel.GetItemImageUrl("GenericCreditIcon10.png")
+                ?? ResolveAssetUpwards("items", "GenericCreditIcon10.png");
+            CreditsIconBitmap ??= LoadLocalBitmapSafe(credPath);
+
+            UiIconNavEvents = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_events.png"));
+            UiIconNavAlerts = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_alerts.png"));
+            UiIconNavInvasions = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_invasions.png"));
+            UiIconNavFissures = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_fissures.png"));
+            UiIconNavSortie = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_sortie.png"));
+            UiIconNavArchon = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_archon.png"));
+            UiIconNavTraders = LoadLocalBitmapSafe(ResolveUiAssetPath("nav_traders.png"));
+            UiIconNightwave = LoadLocalBitmapSafe(ResolveUiAssetPath("nightwave_emblem.png"));
+            UiIconArbitrationHexis = LoadLocalBitmapSafe(ResolveUiAssetPath("arbitration_hexis.png"));
+            UiIconArbitrationBadge = LoadLocalBitmapSafe(ResolveUiAssetPath("arbitration_badge.png"));
+            UiIconDuviriBanner = LoadLocalBitmapSafe(ResolveUiAssetPath("btn_duviri.png"), 380);
+            UiIconFissureOrigin = LoadLocalBitmapSafe(ResolveUiAssetPath("fissure_origin.png"));
+            UiIconFissureSteelPath = LoadLocalBitmapSafe(ResolveUiAssetPath("fissure_steelpath.png"));
+            UiIconFissureProxima = LoadLocalBitmapSafe(ResolveUiAssetPath("fissure_proxima.png"));
+
+            OnPropertyChanged(nameof(CreditsIconBitmap));
+            OnPropertyChanged(nameof(UiIconNavEvents));
+            OnPropertyChanged(nameof(UiIconNavAlerts));
+            OnPropertyChanged(nameof(UiIconNavInvasions));
+            OnPropertyChanged(nameof(UiIconNavFissures));
+            OnPropertyChanged(nameof(UiIconNavSortie));
+            OnPropertyChanged(nameof(UiIconNavArchon));
+            OnPropertyChanged(nameof(UiIconNavTraders));
+            OnPropertyChanged(nameof(UiIconNightwave));
+            OnPropertyChanged(nameof(UiIconArbitrationHexis));
+            OnPropertyChanged(nameof(UiIconArbitrationBadge));
+            OnPropertyChanged(nameof(UiIconDuviriBanner));
+            OnPropertyChanged(nameof(UiIconFissureOrigin));
+            OnPropertyChanged(nameof(UiIconFissureSteelPath));
+            OnPropertyChanged(nameof(UiIconFissureProxima));
+
+            OnPropertyChanged(nameof(HasUiIconNavEvents));
+            OnPropertyChanged(nameof(HasUiIconNavAlerts));
+            OnPropertyChanged(nameof(HasUiIconNavInvasions));
+            OnPropertyChanged(nameof(HasUiIconNavFissures));
+            OnPropertyChanged(nameof(HasUiIconNavSortie));
+            OnPropertyChanged(nameof(HasUiIconNavArchon));
+            OnPropertyChanged(nameof(HasUiIconNavTraders));
+            OnPropertyChanged(nameof(HasUiIconNightwave));
+            OnPropertyChanged(nameof(HasUiIconArbitrationHexis));
+            OnPropertyChanged(nameof(HasUiIconArbitrationBadge));
+            OnPropertyChanged(nameof(HasUiIconDuviriBanner));
+            OnPropertyChanged(nameof(HasUiIconFissureOrigin));
+            OnPropertyChanged(nameof(HasUiIconFissureSteelPath));
+            OnPropertyChanged(nameof(HasUiIconFissureProxima));
+        }
+
+        private static string? ResolveUiAssetPath(string fileName) => ResolveAssetUpwards("ui", fileName);
+
+        private static string? ResolveAssetUpwards(string subFolder, string fileName)
+        {
+            string dataDir = Path.GetDirectoryName(StorageService.Instance.SaveDirectoryPath)
+                ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
+            string p1 = Path.Combine(dataDir, "assets", subFolder, fileName);
+            if (File.Exists(p1)) return p1;
+
+            string? cur = Path.TrimEndingDirectorySeparator(AppDomain.CurrentDomain.BaseDirectory);
+            for (int i = 0; i < 8 && !string.IsNullOrEmpty(cur); i++)
+            {
+                string cand = Path.Combine(cur, "data", "assets", subFolder, fileName);
+                if (File.Exists(cand)) return cand;
+                cur = Directory.GetParent(cur)?.FullName;
+            }
+            return null;
+        }
+
+        private static BitmapImage? LoadLocalBitmapSafe(string? path, int decodeWidth = 96)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
+            try
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(path, UriKind.Absolute);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.DecodePixelWidth = decodeWidth;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void NotifyHudCountsChanged()
+        {
+            OnPropertyChanged(nameof(HudEventsCount));
+            OnPropertyChanged(nameof(HudAlertsCount));
+            OnPropertyChanged(nameof(HudInvasionsCount));
+            OnPropertyChanged(nameof(HudFissuresCount));
+            OnPropertyChanged(nameof(HudSortieCount));
+            OnPropertyChanged(nameof(HudArchonCount));
+            OnPropertyChanged(nameof(HudTradersCount));
+            OnPropertyChanged(nameof(HasActiveAlertItems));
         }
 
         private void BuildDuviriRotationSchedule()
         {
             AllDuviriRotations.Clear();
-            AllDuviriRotations.Add(new DuviriRotationWeek { WeekNumber = 1, DateRange = "Ротация 1", IsCurrentWeek = true, NormalWarframes = new() { "Excalibur", "Trinity", "Ember" }, SteelPathIncarnons = new() { "Брейтон", "Лато", "Скана", "Парис", "Кунай" } });
+            AllDuviriRotations.Add(new DuviriRotationWeek { WeekNumber = 1, DateRange = "Ротация 1", IsCurrentWeek = true, NormalWarframes = new() { "Excalibur", "Trinity", "Ember" }, SteelPathIncarnons = new() { "Брэйтон", "Лато", "Скана", "Парис", "Кунаи" } });
             AllDuviriRotations.Add(new DuviriRotationWeek { WeekNumber = 2, DateRange = "Ротация 2", NormalWarframes = new() { "Loki", "Mag", "Rhino" }, SteelPathIncarnons = new() { "Вепрь", "Гаммакор", "Ангстрем", "Горгона", "Анку" } });
             AllDuviriRotations.Add(new DuviriRotationWeek { WeekNumber = 3, DateRange = "Ротация 3", NormalWarframes = new() { "Gara", "Khora", "Revenant" }, SteelPathIncarnons = new() { "Бо", "Латрон", "Фурис", "Фуракс", "Стран" } });
             AllDuviriRotations.Add(new DuviriRotationWeek { WeekNumber = 4, DateRange = "Ротация 4", NormalWarframes = new() { "Ash", "Frost", "Nyx" }, SteelPathIncarnons = new() { "Лекс", "Магистр", "Болтор", "Бронко", "Керамический кинжал" } });
@@ -644,21 +886,28 @@ namespace WarfAssistant.ViewModels
                 return idx > 0 ? s[..idx].Trim() : s.Trim();
             }
 
+            string normalized = itemName.Trim().ToLowerInvariant() switch
+            {
+                "брейтон" => "Брэйтон",
+                "кунай" => "Кунаи",
+                _ => itemName.Trim()
+            };
+
             IEnumerable<CollectionItemModel> pool = isWeapon
                 ? catalog.Where(c => c.Category is "Основное" or "Вторичное" or "Ближний бой")
                 : catalog.Where(c => c.Category == "Варфреймы");
 
             var candidates = pool.Where(c =>
-                BaseName(c.Name).Equals(itemName, StringComparison.OrdinalIgnoreCase) ||
-                c.NameEn.Equals(itemName, StringComparison.OrdinalIgnoreCase) ||
-                c.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase))
+                BaseName(c.Name).Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
+                c.NameEn.Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
+                c.Name.Equals(normalized, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            if (candidates.Count == 0 && itemName.Contains(' ', StringComparison.Ordinal))
+            if (candidates.Count == 0 && normalized.Contains(' ', StringComparison.Ordinal))
             {
                 candidates = pool.Where(c =>
-                    c.Name.StartsWith(itemName, StringComparison.OrdinalIgnoreCase) ||
-                    c.NameEn.StartsWith(itemName, StringComparison.OrdinalIgnoreCase))
+                    c.Name.StartsWith(normalized, StringComparison.OrdinalIgnoreCase) ||
+                    c.NameEn.StartsWith(normalized, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
@@ -687,19 +936,24 @@ namespace WarfAssistant.ViewModels
             _currentWeekKey = key;
 
             var doneSet = StorageService.Instance.LoadWeeklyChecklist(key);
-            void SaveCb() => StorageService.Instance.SaveWeeklyChecklist(key, WeeklyChecklist.Where(i => i.IsCompleted).Select(i => i.Id));
+            void SaveCb()
+            {
+                StorageService.Instance.SaveWeeklyChecklist(key, WeeklyChecklist.Where(i => i.IsCompleted).Select(i => i.Id));
+                NotifyHudCountsChanged();
+            }
 
             WeeklyChecklist.Clear();
             var entries = new[]
             {
+                ("ayatan", "Охота за сокровищами Аятан (Еженед.)", "Базар Мэру (Марс) • 1 скульптура Аятан в неделю"),
+                ("clem", "Помогите Клему", "Реле Strata / Дарво • Еженедельные чертежи Спектров"),
                 ("archon", "Охота на Архонта", "Осколок Архонта + награда вылазки"),
                 ("netracells", "Нетракамеры (5/5 зарядов)", "Санктум Анатомика: Мистификаторы & Осколки"),
                 ("deep_archimedea", "Глубокая Архимедия (Лаборатории)", "3 миссии • Осколки Тау + Мистификаторы"),
-                ("temp_archimedea", "Временная Архимедия (1999)", "Хольвания • Наклейки Печатного цеха + Осколки"),
+                ("temp_archimedea", "Временная Архимедия (1999)", "Торговый Центр Хёльвании • Наклейки Печатного цеха + Осколки"),
                 ("calendar_1999", "Календарь 1999 (Хекс)", "Большие призы, Форма Умбра / Адаптеры"),
                 ("duviri_circuit", "Цепь Дувири (Обычная / СП)", "Инкарнон-адаптеры и чертежи фреймов"),
                 ("palladino", "Палладино: Мод Разлома + Кува", "Железная Цитадель (Земля) • за 10 Осколков"),
-                ("ayatan", "Охота за сокровищем Аятан (Мэру)", "Базар Мэру (Марс) • 1 скульптура в неделю"),
                 ("teshin_sp", "Почести Тешина (Стальной Путь)", "Еженедельная ротация за Стальную Эссенцию")
             };
 
@@ -748,59 +1002,56 @@ namespace WarfAssistant.ViewModels
             try
             {
                 string? rawJson = await WorldStateService.Instance.FetchOrLoadCachedWorldstateJsonAsync().ConfigureAwait(false);
-                if (string.IsNullOrEmpty(rawJson))
+                DateTime utcNow = DateTime.UtcNow;
+                bool liveApi = WorldStateService.Instance.LastFetchWasLive;
+                var catalog = _getCatalog();
+
+                JsonElement? rootNullable = null;
+                if (!string.IsNullOrEmpty(rawJson))
+                {
+                    using var doc = JsonDocument.Parse(rawJson);
+                    rootNullable = doc.RootElement.Clone();
+                }
+
+                var dictTask = WorldStateService.Instance.EnsureEnRuDictionaryLoadedAsync();
+                Task<ArbitrationModel?> arbyTask = rootNullable.HasValue
+                    ? WorldStateService.Instance.ResolveCurrentArbitrationAsync(rootNullable.Value, utcNow)
+                    : Task.FromResult<ArbitrationModel?>(null);
+                await Task.WhenAll(dictTask, arbyTask).ConfigureAwait(false);
+                var arbyResolved = arbyTask.Result;
+
+                bool hasLiveFissures = liveApi && rootNullable.HasValue &&
+                    rootNullable.Value.TryGetProperty("fissures", out var fArrCheck) &&
+                    fArrCheck.ValueKind == JsonValueKind.Array && fArrCheck.GetArrayLength() > 0;
+
+                WorldStateService.DeOfficialWorldFallback? deFallback = null;
+                if (!hasLiveFissures)
+                {
+                    deFallback = await WorldStateService.Instance.FetchOfficialDeFissuresAndThreatsAsync(utcNow, catalog).ConfigureAwait(false);
+                }
+
+                if (!rootNullable.HasValue && deFallback == null)
                 {
                     await RunOnUiAsync(() => SyncLabel = "Оффлайн режим (нет связи с API)").ConfigureAwait(false);
                     return;
                 }
 
-                using var doc = JsonDocument.Parse(rawJson);
-                var root = doc.RootElement.Clone();
-                DateTime utcNow = DateTime.UtcNow;
-
-                var dictTask = WorldStateService.Instance.EnsureEnRuDictionaryLoadedAsync();
-                var arbyTask = WorldStateService.Instance.ResolveCurrentArbitrationAsync(root, utcNow);
-                await Task.WhenAll(dictTask, arbyTask).ConfigureAwait(false);
-                var arbyResolved = arbyTask.Result;
-
-                bool liveApi = WorldStateService.Instance.LastFetchWasLive;
-                bool hasLiveFissures = liveApi && root.TryGetProperty("fissures", out var fArrCheck) && fArrCheck.ValueKind == JsonValueKind.Array && fArrCheck.GetArrayLength() > 0;
-                WorldStateService.DeOfficialWorldFallback? deFallback = null;
-                if (!hasLiveFissures)
-                {
-                    deFallback = await WorldStateService.Instance.FetchOfficialDeFissuresAndThreatsAsync(utcNow).ConfigureAwait(false);
-                }
-
                 await RunOnUiAsync(() =>
                 {
-                    ApplyParsedWorldstate(root, arbyResolved, utcNow);
-                    if (deFallback != null)
-                    {
-                        if (deFallback.Fissures.Count > 0)
-                        {
-                            foreach (var f in deFallback.Fissures)
-                                f.TierIconUrl = MainViewModel.GetTierRelicIcon(f.Tier);
-                            AllFissures.Clear();
-                            AllFissures.AddRange(deFallback.Fissures);
-                            RebuildFissureRegionOptions();
-                            ApplyFissuresFilter();
-                        }
-                        if (!liveApi && deFallback.FomorianPercent.HasValue)
-                        {
-                            Threats = new ThreatProgressModel
-                            {
-                                FomorianPercent = deFallback.FomorianPercent.Value,
-                                RazorbackPercent = deFallback.RazorbackPercent ?? Threats.RazorbackPercent
-                            };
-                            OnPropertyChanged(nameof(Threats));
-                        }
-                    }
+                    if (rootNullable.HasValue)
+                        ApplyParsedWorldstate(rootNullable.Value, arbyResolved, utcNow);
+                    else if (arbyResolved != null)
+                        ParseArbitration(arbyResolved);
 
-                    string tsStr = WorldStateService.GetStr(root, "timestamp");
+                    if (deFallback != null)
+                        ApplyOfficialDeFallback(deFallback, liveApi);
+
+                    string tsStr = rootNullable.HasValue ? WorldStateService.GetStr(rootNullable.Value, "timestamp") : string.Empty;
                     DateTime apiTs = WarframeApiService.ParseIsoOrFallback(tsStr, TimeSpan.Zero);
+                    bool hasDeLive = deFallback != null && (deFallback.Fissures.Count > 0 || deFallback.SortieStages.Count > 0);
                     SyncLabel = liveApi
                         ? $"Live API • {apiTs.ToLocalTime():HH:mm:ss}"
-                        : (deFallback?.Fissures.Count > 0
+                        : (hasDeLive
                             ? $"DE CDN + Кэш • {DateTime.Now:HH:mm:ss}"
                             : $"Кэш • {apiTs.ToLocalTime():HH:mm:ss}");
                     Tick(DateTime.UtcNow, suppressNotifications: true);
@@ -824,6 +1075,106 @@ namespace WarfAssistant.ViewModels
                 }
                 await RunOnUiAsync(() => IsRefreshing = false).ConfigureAwait(false);
             }
+        }
+
+        private void ApplyOfficialDeFallback(WorldStateService.DeOfficialWorldFallback de, bool liveApi)
+        {
+            if (de.Fissures.Count > 0)
+            {
+                foreach (var f in de.Fissures)
+                    f.TierIconUrl = MainViewModel.GetTierRelicIcon(f.Tier);
+                AllFissures.Clear();
+                AllFissures.AddRange(de.Fissures);
+                RebuildFissureRegionOptions();
+                ApplyFissuresFilter();
+            }
+
+            if (liveApi) return;
+
+            if (de.FomorianPercent.HasValue)
+            {
+                Threats = new ThreatProgressModel
+                {
+                    FomorianPercent = de.FomorianPercent.Value,
+                    RazorbackPercent = de.RazorbackPercent ?? Threats.RazorbackPercent
+                };
+                OnPropertyChanged(nameof(Threats));
+            }
+
+            if (de.SortieExpiryUtc.HasValue && de.SortieStages.Count > 0)
+            {
+                DailySortie.Boss = string.IsNullOrEmpty(de.SortieBoss) ? DailySortie.Boss : de.SortieBoss;
+                DailySortie.Faction = string.IsNullOrEmpty(de.SortieFaction) ? DailySortie.Faction : de.SortieFaction;
+                DailySortie.ExpiryUtc = de.SortieExpiryUtc.Value;
+                DailySortie.Stages.Clear();
+                foreach (var st in de.SortieStages) DailySortie.Stages.Add(st);
+                DailySortie.RefreshAll();
+            }
+
+            if (de.ArchonExpiryUtc.HasValue && de.ArchonStages.Count > 0 && !string.IsNullOrEmpty(de.ArchonRawBoss))
+            {
+                string shardKey = de.ArchonRawBoss.Contains("Boreal", StringComparison.OrdinalIgnoreCase) ? "boreal"
+                    : (de.ArchonRawBoss.Contains("Amar", StringComparison.OrdinalIgnoreCase) ? "amar"
+                    : (de.ArchonRawBoss.Contains("Nira", StringComparison.OrdinalIgnoreCase) ? "nira" : "amar"));
+                ArchonHunt.Boss = de.ArchonBossRu ?? ArchonHunt.Boss;
+                ArchonHunt.ShardTitle = de.ArchonShardTitle ?? ArchonHunt.ShardTitle;
+                ArchonHunt.ShardColor = de.ArchonShardColor ?? ArchonHunt.ShardColor;
+                var (baseUrl, glowUrl) = WorldStateService.GetArchonShardIconUrls(de.ArchonRawBoss);
+                ArchonHunt.ShardBaseIconUrl = ImageCacheService.NormalizeImageUrl(baseUrl);
+                ArchonHunt.ShardIconUrl = ImageCacheService.NormalizeImageUrl(_archonIconPaths.GetValueOrDefault(shardKey, glowUrl));
+                ArchonHunt.ExpiryUtc = de.ArchonExpiryUtc.Value;
+                ArchonHunt.Stages.Clear();
+                foreach (var st in de.ArchonStages) ArchonHunt.Stages.Add(st);
+                ArchonHunt.RefreshAll();
+            }
+
+            if (de.DarvoDeal != null)
+            {
+                DarvoDeal.ItemName = de.DarvoDeal.ItemName;
+                DarvoDeal.OriginalPrice = de.DarvoDeal.OriginalPrice;
+                DarvoDeal.SalePrice = de.DarvoDeal.SalePrice;
+                DarvoDeal.DiscountPercent = de.DarvoDeal.DiscountPercent;
+                DarvoDeal.TotalCount = de.DarvoDeal.TotalCount;
+                DarvoDeal.SoldCount = de.DarvoDeal.SoldCount;
+                DarvoDeal.ExpiryUtc = de.DarvoDeal.ExpiryUtc;
+                DarvoDeal.RefreshAll();
+            }
+
+            if (de.TraderExpiryUtc.HasValue && de.TraderActivationUtc.HasValue)
+            {
+                Baro.CharacterName = de.TraderCharacter ?? "Баро Ки'Тиир";
+                if (!string.IsNullOrEmpty(de.TraderLocation)) Baro.Location = de.TraderLocation;
+                Baro.ActivationUtc = de.TraderActivationUtc.Value;
+                Baro.ExpiryUtc = de.TraderExpiryUtc.Value;
+                Baro.IsActive = DateTime.UtcNow >= Baro.ActivationUtc && DateTime.UtcNow < Baro.ExpiryUtc;
+                Baro.RefreshAll();
+            }
+
+            if (de.Alerts.Count > 0 || ActiveAlerts.Count > 0)
+            {
+                ActiveAlerts.Clear();
+                foreach (var a in de.Alerts) ActiveAlerts.Add(a);
+            }
+
+            GlobalBoosters.Clear();
+            foreach (var b in de.Boosters) GlobalBoosters.Add(b);
+            OnPropertyChanged(nameof(HasGlobalBoosters));
+
+            if (de.NightwaveExpiryUtc.HasValue)
+            {
+                Nightwave.ExpiryUtc = de.NightwaveExpiryUtc.Value;
+                if (!string.IsNullOrEmpty(de.NightwaveTag))
+                    Nightwave.SeasonTitle = FormatNightwaveSeasonTitle(de.NightwaveTag, de.NightwavePhase ?? 0);
+                if (de.NightwaveChallenges.Count > 0)
+                {
+                    Nightwave.Challenges.Clear();
+                    foreach (var c in de.NightwaveChallenges.OrderBy(x => x.Reputation).ThenBy(x => x.ExpiryUtc))
+                        Nightwave.Challenges.Add(c);
+                }
+                Nightwave.RefreshAll();
+            }
+
+            NotifyHudCountsChanged();
         }
 
         private void ApplyParsedWorldstate(JsonElement root, ArbitrationModel? arbyResolved, DateTime utcNow)
@@ -850,6 +1201,7 @@ namespace WarfAssistant.ViewModels
             ParseBaro(root, catalog);
             ParseNightwave(root, utcNow);
             ParseMiscIndicators(root);
+            NotifyHudCountsChanged();
         }
 
         private void ParseWorldCycles(JsonElement root)
@@ -1117,8 +1469,10 @@ namespace WarfAssistant.ViewModels
             ArchonHunt.Boss = bossRu;
             ArchonHunt.ShardTitle = shardRu;
             ArchonHunt.ShardColor = shardCol;
+            var (baseUrl, glowUrl) = WorldStateService.GetArchonShardIconUrls(rawBoss);
+            ArchonHunt.ShardBaseIconUrl = ImageCacheService.NormalizeImageUrl(baseUrl);
             ArchonHunt.ShardIconUrl = ImageCacheService.NormalizeImageUrl(
-                _archonIconPaths.GetValueOrDefault(shardKey, WorldStateService.GetArchonShardIconPath(rawBoss)));
+                _archonIconPaths.GetValueOrDefault(shardKey, glowUrl));
             ArchonHunt.ExpiryUtc = WarframeApiService.ParseIsoOrFallback(WorldStateService.GetStr(aEl, "expiry"), TimeSpan.FromDays(3));
             ArchonHunt.Stages.Clear();
             if (aEl.TryGetProperty("missions", out var ms) && ms.ValueKind == JsonValueKind.Array)
@@ -1689,7 +2043,7 @@ namespace WarfAssistant.ViewModels
             string tag = WorldStateService.GetStr(nw, "tag");
             int phase = nw.TryGetProperty("phase", out var phEl) && phEl.ValueKind == JsonValueKind.Number ? phEl.GetInt32() : 0;
             if (!string.IsNullOrEmpty(tag))
-                Nightwave.SeasonTitle = $"Ночная Волна ({tag}, Фаза {phase})";
+                Nightwave.SeasonTitle = FormatNightwaveSeasonTitle(tag, phase);
 
             var chList = new List<NightwaveChallenge>();
             if (nw.TryGetProperty("activeChallenges", out var arr) && arr.ValueKind == JsonValueKind.Array)
@@ -1816,6 +2170,12 @@ namespace WarfAssistant.ViewModels
             }
 
             // Daily / Weekly activity countdowns
+            if (((DailySortie.Stages.Count > 0 && DailySortie.ExpiryUtc <= utcNow) ||
+                 (ArchonHunt.Stages.Count > 0 && ArchonHunt.ExpiryUtc <= utcNow)) &&
+                !isFetching && (utcNow - lastAutoSync).TotalSeconds > 30)
+            {
+                rolledOver = true;
+            }
             DailySortie.TimeRemaining = FormatTimeSpan(DailySortie.ExpiryUtc - utcNow);
             if (Arbitration.ExpiryUtc <= utcNow && !isFetching && (utcNow - lastAutoSync).TotalSeconds > 30)
                 rolledOver = true;
@@ -1836,6 +2196,7 @@ namespace WarfAssistant.ViewModels
             {
                 Baro.IsActive = nowBaroActive;
                 Baro.RefreshAll();
+                OnPropertyChanged(nameof(HudTradersCount));
                 if (nowBaroActive && !suppressNotifications && Baro.NotifyEnabled)
                 {
                     _statusCallback($"🔔 Баро Ки'Тиир прибыл на реле {Baro.Location}!");
@@ -1862,10 +2223,16 @@ namespace WarfAssistant.ViewModels
                 foreach (var f in DisplayFissures) f.TimeRemaining = FormatTimeSpan(f.ExpiryUtc - utcNow);
             }
 
+            bool alertsRemoved = false;
             for (int i = ActiveAlerts.Count - 1; i >= 0; i--)
             {
-                if (ActiveAlerts[i].ExpiryUtc <= utcNow) ActiveAlerts.RemoveAt(i);
+                if (ActiveAlerts[i].ExpiryUtc <= utcNow) { ActiveAlerts.RemoveAt(i); alertsRemoved = true; }
                 else ActiveAlerts[i].TimeRemaining = FormatTimeSpan(ActiveAlerts[i].ExpiryUtc - utcNow);
+            }
+            if (alertsRemoved)
+            {
+                OnPropertyChanged(nameof(HudAlertsCount));
+                OnPropertyChanged(nameof(HasActiveAlertItems));
             }
             foreach (var inv in ActiveInvasions) inv.TimeRemaining = FormatTimeSpan(inv.ExpiryUtc - utcNow);
             foreach (var op in Operations) op.TimeRemaining = FormatTimeSpan(op.ExpiryUtc - utcNow);
@@ -1919,6 +2286,9 @@ namespace WarfAssistant.ViewModels
             var sorted = AllFissures.Where(f =>
             {
                 if (SelectedFissureTier != "All" && !string.Equals(f.Tier, SelectedFissureTier, StringComparison.OrdinalIgnoreCase)) return false;
+                if (FissureCategoryFilter == "Origin" && (f.IsSteelPath || f.IsVoidStorm)) return false;
+                if (FissureCategoryFilter == "SteelPath" && !f.IsSteelPath) return false;
+                if (FissureCategoryFilter == "Proxima" && !f.IsVoidStorm) return false;
                 if (FissureSteelPathMode == "Normal" && f.IsSteelPath) return false;
                 if (FissureSteelPathMode == "SteelPath" && !f.IsSteelPath) return false;
                 if (FissureMissionTypeMode == "Standard" && f.IsVoidStorm) return false;
@@ -1928,6 +2298,7 @@ namespace WarfAssistant.ViewModels
             }).OrderBy(f => f.TierOrder).ThenBy(f => f.ExpiryUtc);
 
             foreach (var item in sorted) DisplayFissures.Add(item);
+            NotifyHudCountsChanged();
         }
 
         public void ApplyVarziaFilter()
@@ -2035,6 +2406,19 @@ namespace WarfAssistant.ViewModels
                 Nightwave.AllOfferings.Add(new NightwaveOffering { Name = "Экстракт Нитаина (5 шт.)", Category = "Ресурсы и Кува", Description = "Всегда в ротации Норы", CredCost = 15, IsAlwaysAvailable = true, IconGlyph = "🧪" });
             }
             ApplyNightwaveOfferingsFilter();
+        }
+
+        private static string FormatNightwaveSeasonTitle(string tag, int phase)
+        {
+            string compact = tag.Replace(" ", "", StringComparison.Ordinal);
+            if (compact.Contains("RadioLegionIntermission", StringComparison.OrdinalIgnoreCase))
+            {
+                var digits = new string(compact.Where(char.IsDigit).ToArray());
+                return string.IsNullOrEmpty(digits)
+                    ? $"Антракт Ночной Волны (Фаза {phase})"
+                    : $"Микс Норы #{digits} (Фаза {phase})";
+            }
+            return $"{tag} (Фаза {phase})";
         }
 
         private static (string TitleRu, string DescRu) TranslateNightwaveChallenge(string title, string desc)

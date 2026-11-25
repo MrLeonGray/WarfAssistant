@@ -504,6 +504,16 @@ namespace WarfAssistant.Models
         public string SystemRegion { get; set; } = "Звёздная карта";
         public string MissionType { get; set; } = string.Empty;
         public string Tier { get; set; } = "Lith";
+        public string TierDisplay => Tier switch
+        {
+            "Lith" => "Лит",
+            "Meso" => "Мезо",
+            "Neo" => "Нео",
+            "Axi" => "Акси",
+            "Requiem" => "Реквием",
+            "Omnia" => "Омни",
+            _ => Tier
+        };
         public int TierOrder { get; set; } = 1; // 1: Lith, 2: Meso, 3: Neo, 4: Axi, 5: Requiem, 6: Omnia
         public string TierColor { get; set; } = "#F59E0B";
         public string EnemyFaction { get; set; } = "Гринир";
@@ -750,7 +760,9 @@ namespace WarfAssistant.Models
         }
 
         public string TypeBadge => IsElite ? "★ ЭЛИТНОЕ (7000)" : (IsDaily ? "ЕЖЕДНЕВНОЕ (1000)" : "ЕЖЕНЕДЕЛЬНОЕ (4500)");
-        public string TypeBadgeColor => IsElite ? "#F59E0B" : (IsDaily ? "#10B981" : "#0EA5E9");
+        public string TypeShortLabel => IsElite ? "ЭЛИТНОЕ" : (IsDaily ? "ЕЖЕДНЕВНОЕ" : "ЕЖЕНЕДЕЛЬНОЕ");
+        public string TypeBadgeColor => IsElite ? "#F59E0B" : (IsDaily ? "#10B981" : "#38BDF8");
+        public string ReputationDisplay => Reputation.ToString("N0").Replace(",", " ");
     }
 
     public class NightwaveRewardRank : INotifyPropertyChanged
@@ -775,7 +787,7 @@ namespace WarfAssistant.Models
             _iconBitmap = bmp;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IconBitmap)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasLoadedIcon)));
-        }, decodeWidth: 72);
+        }, decodeWidth: 128);
     }
 
     public class NightwaveOffering : INotifyPropertyChanged
@@ -797,7 +809,7 @@ namespace WarfAssistant.Models
             _iconBitmap = bmp;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IconBitmap)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasLoadedIcon)));
-        }, decodeWidth: 64);
+        }, decodeWidth: 128);
     }
 
     public class NightwaveInfo : INotifyPropertyChanged
@@ -808,10 +820,32 @@ namespace WarfAssistant.Models
         protected void OnPropertyChanged([CallerMemberName] string? propName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
 
+        private DateTime _expiryUtc;
         public string SeasonTitle { get; set; } = "Ночная Волна";
         public int SeasonNumber { get; set; } = 18;
         public int CurrentRank { get; set; } = 30;
-        public DateTime ExpiryUtc { get; set; }
+        public DateTime ExpiryUtc
+        {
+            get => _expiryUtc;
+            set
+            {
+                if (_expiryUtc != value)
+                {
+                    _expiryUtc = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(HasUncertainExpiry));
+                    OnPropertyChanged(nameof(SeasonExpiryHint));
+                }
+            }
+        }
+
+        /// <summary>
+        /// DE sets a far-future placeholder end date in SeasonInfo.Expiry until the official end date is announced.
+        /// </summary>
+        public bool HasUncertainExpiry => _expiryUtc > DateTime.UtcNow.AddDays(45);
+        public string SeasonExpiryHint => HasUncertainExpiry
+            ? $"Серверная дата-заглушка DE API ({_expiryUtc:dd.MM.yyyy} UTC): точная дата окончания этой Ночной Волны ещё не объявлена разработчиками и изменится перед завершением сезона."
+            : $"Официальная дата окончания сезона: {_expiryUtc.ToLocalTime():dd.MM.yyyy HH:mm}";
 
         public string TimeRemaining
         {
@@ -820,10 +854,12 @@ namespace WarfAssistant.Models
         }
 
         public string? CredIconUrl { get; set; }
+        public bool HasCredIcon => _credBitmap != null;
         public BitmapImage? CredIconBitmap => IconLoaderHelper.GetOrRequest(CredIconUrl, ref _credBitmap, bmp =>
         {
             _credBitmap = bmp;
             OnPropertyChanged(nameof(CredIconBitmap));
+            OnPropertyChanged(nameof(HasCredIcon));
         }, decodeWidth: 36);
         public ObservableCollection<NightwaveChallenge> Challenges { get; } = new();
         public List<NightwaveRewardRank> RankRewards { get; } = new();
@@ -1411,6 +1447,9 @@ namespace WarfAssistant.Models
         public string Faction { get; set; } = string.Empty;
         public string SourceNote { get; set; } = string.Empty;
         public string FullLocation => string.IsNullOrEmpty(Planet) ? Node : $"{Node} ({Planet})";
+        public string MissionHeader => string.IsNullOrEmpty(Faction)
+            ? MissionType.ToUpperInvariant()
+            : $"{MissionType.ToUpperInvariant()} - {Faction}";
         public DateTime ExpiryUtc { get; set; }
         public string TimeRemaining
         {
@@ -1464,6 +1503,7 @@ namespace WarfAssistant.Models
     public class ArchonHuntModel : INotifyPropertyChanged
     {
         private string _timeRemaining = "00д 00ч";
+        private BitmapImage? _shardBaseBitmap;
         private BitmapImage? _shardBitmap;
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propName = null) =>
@@ -1472,6 +1512,30 @@ namespace WarfAssistant.Models
         public string Boss { get; set; } = string.Empty;
         public string ShardTitle { get; set; } = string.Empty;
         public string ShardColor { get; set; } = "#EF4444";
+        private string? _shardBaseIconUrl;
+        public string? ShardBaseIconUrl
+        {
+            get => _shardBaseIconUrl;
+            set
+            {
+                if (!string.Equals(_shardBaseIconUrl, value, StringComparison.Ordinal))
+                {
+                    _shardBaseIconUrl = value;
+                    _shardBaseBitmap = null;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShardBaseBitmap));
+                    OnPropertyChanged(nameof(HasShardBaseBitmap));
+                }
+            }
+        }
+        public bool HasShardBaseBitmap => _shardBaseBitmap != null;
+        public BitmapImage? ShardBaseBitmap => IconLoaderHelper.GetOrRequest(ShardBaseIconUrl, ref _shardBaseBitmap, bmp =>
+        {
+            _shardBaseBitmap = bmp;
+            OnPropertyChanged(nameof(ShardBaseBitmap));
+            OnPropertyChanged(nameof(HasShardBaseBitmap));
+        }, decodeWidth: 84);
+
         private string? _shardIconUrl;
         public string? ShardIconUrl
         {

@@ -160,28 +160,57 @@ namespace WarfAssistant.Services
             public List<VoidFissureItem> Fissures { get; } = new();
             public double? FomorianPercent { get; set; }
             public double? RazorbackPercent { get; set; }
+
+            public string? SortieBoss { get; set; }
+            public string? SortieFaction { get; set; }
+            public DateTime? SortieExpiryUtc { get; set; }
+            public List<SortieStageModel> SortieStages { get; } = new();
+
+            public string? ArchonRawBoss { get; set; }
+            public string? ArchonBossRu { get; set; }
+            public string? ArchonShardTitle { get; set; }
+            public string? ArchonShardColor { get; set; }
+            public DateTime? ArchonExpiryUtc { get; set; }
+            public List<SortieStageModel> ArchonStages { get; } = new();
+
+            public List<AlertItem> Alerts { get; } = new();
+            public DarvoDealModel? DarvoDeal { get; set; }
+
+            public string? TraderCharacter { get; set; }
+            public string? TraderLocation { get; set; }
+            public DateTime? TraderActivationUtc { get; set; }
+            public DateTime? TraderExpiryUtc { get; set; }
+
+            public List<GlobalBoosterModel> Boosters { get; } = new();
+
+            public DateTime? NightwaveExpiryUtc { get; set; }
+            public string? NightwaveTag { get; set; }
+            public int? NightwavePhase { get; set; }
+            public List<NightwaveChallenge> NightwaveChallenges { get; } = new();
         }
 
         public static string ResolveFissureRegion(string planet, string node, bool isStorm)
         {
-            if (isStorm || planet.Contains("Проксима", StringComparison.OrdinalIgnoreCase))
+            if (isStorm || planet.Contains("Проксима", StringComparison.OrdinalIgnoreCase) || planet.Contains("Proxima", StringComparison.OrdinalIgnoreCase))
                 return "Рэйлджек (Проксима)";
-            if (planet.Contains("Зариман", StringComparison.OrdinalIgnoreCase))
+            if (planet.Contains("Зариман", StringComparison.OrdinalIgnoreCase) || planet.Contains("Zariman", StringComparison.OrdinalIgnoreCase))
                 return "Зариман";
-            if (planet.Contains("Хольван", StringComparison.OrdinalIgnoreCase) || planet.Contains("1999", StringComparison.OrdinalIgnoreCase))
+            if (planet.Contains("Хольван", StringComparison.OrdinalIgnoreCase) || planet.Contains("Hollvania", StringComparison.OrdinalIgnoreCase) ||
+                planet.Contains("Höllvania", StringComparison.OrdinalIgnoreCase) || planet.Contains("1999", StringComparison.OrdinalIgnoreCase))
                 return "1999 (Хольвания)";
-            if (planet.Contains("Деймос", StringComparison.OrdinalIgnoreCase) &&
-                (node.Contains("Cambire", StringComparison.OrdinalIgnoreCase) ||
+            if ((planet.Contains("Деймос", StringComparison.OrdinalIgnoreCase) || planet.Contains("Deimos", StringComparison.OrdinalIgnoreCase) || planet.Contains("Sanctum", StringComparison.OrdinalIgnoreCase)) &&
+                (planet.Contains("Sanctum", StringComparison.OrdinalIgnoreCase) ||
+                 node.Contains("Cambire", StringComparison.OrdinalIgnoreCase) ||
                  node.Contains("Munio", StringComparison.OrdinalIgnoreCase) ||
                  node.Contains("Persto", StringComparison.OrdinalIgnoreCase) ||
                  node.Contains("Armatus", StringComparison.OrdinalIgnoreCase) ||
                  node.Contains("Nex", StringComparison.OrdinalIgnoreCase)))
                 return "Санктум (Деймос)";
-            if (planet.Equals("Луа", StringComparison.OrdinalIgnoreCase))
+            if (planet.Equals("Луа", StringComparison.OrdinalIgnoreCase) || planet.Equals("Lua", StringComparison.OrdinalIgnoreCase))
                 return "Луа";
-            if (planet.Contains("Кув", StringComparison.OrdinalIgnoreCase))
+            if (planet.Contains("Кув", StringComparison.OrdinalIgnoreCase) || planet.Contains("Kuva", StringComparison.OrdinalIgnoreCase))
                 return "Крепость Кувы";
-            if (planet.Equals("Бездна", StringComparison.OrdinalIgnoreCase))
+            if (planet.Equals("Бездна", StringComparison.OrdinalIgnoreCase) || planet.Equals("Void", StringComparison.OrdinalIgnoreCase))
                 return "Бездна";
 
             string[] classicOrigin = { "Меркурий", "Венера", "Земля", "Марс", "Фобос", "Деймос", "Церера", "Юпитер", "Европа", "Сатурн", "Уран", "Нептун", "Плутон", "Седна", "Эрида" };
@@ -191,12 +220,31 @@ namespace WarfAssistant.Services
             return "Звёздная карта";
         }
 
-        public async Task<DeOfficialWorldFallback?> FetchOfficialDeFissuresAndThreatsAsync(DateTime utcNow)
+        private (string NodeName, string Planet, string Mission, string Faction) ResolveDeNodeInfo(string nodeKey, bool isStorm = false)
+        {
+            string nodeName = nodeKey;
+            string planet = isStorm ? "Проксима" : "Система";
+            string mission = string.Empty;
+            string faction = "Враги";
+
+            if (_regionsMap != null && _regionsMap.TryGetValue(nodeKey, out var reg))
+            {
+                nodeName = reg.NameEn;
+                planet = TranslatePlanet(reg.SystemEn);
+                mission = TranslateMission(reg.MissionEn);
+                faction = TranslateFaction(reg.FactionEn);
+            }
+            return (nodeName, planet, mission, faction);
+        }
+
+        public async Task<DeOfficialWorldFallback?> FetchOfficialDeFissuresAndThreatsAsync(
+            DateTime utcNow,
+            IReadOnlyList<CollectionItemModel>? catalog = null)
         {
             try
             {
                 await EnsureArbitrationScheduleLoadedAsync().ConfigureAwait(false);
-                string? raw = await WarframeApiService.GetStringAsync("https://api.warframe.com/cdn/worldState.php").ConfigureAwait(false);
+                string? raw = await WarframeApiService.GetStringAsync("https://api.warframe.com/cdn/worldState.php", timeoutSeconds: 10).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(raw)) return null;
 
                 using var doc = JsonDocument.Parse(raw);
@@ -225,24 +273,14 @@ namespace WarfAssistant.Services
                         };
                         bool isHard = el.TryGetProperty("Hard", out var hp) && hp.ValueKind == JsonValueKind.True;
 
-                        string nodeName = nodeKey;
-                        string planet = isStorm ? "Проксима" : "Система";
-                        string mission = TranslateMission(GetStr(el, "MissionType"));
-                        string faction = "Враги";
-
-                        if (_regionsMap != null && _regionsMap.TryGetValue(nodeKey, out var reg))
-                        {
-                            nodeName = reg.NameEn;
-                            planet = TranslatePlanet(reg.SystemEn);
-                            mission = TranslateMission(reg.MissionEn);
-                            faction = TranslateFaction(reg.FactionEn);
-                        }
-
+                        var (nodeName, planet, mission, faction) = ResolveDeNodeInfo(nodeKey, isStorm);
                         if (el.TryGetProperty("MissionType", out var mtEl) && mtEl.ValueKind == JsonValueKind.String)
                         {
                             string ov = TranslateDeMissionCode(mtEl.GetString() ?? string.Empty);
                             if (!string.IsNullOrEmpty(ov)) mission = ov;
                         }
+                        if (string.IsNullOrEmpty(mission))
+                            mission = TranslateMission(GetStr(el, "MissionType"));
 
                         int order = tier switch { "Lith" => 1, "Meso" => 2, "Neo" => 3, "Axi" => 4, "Requiem" => 5, "Omnia" => 6, _ => 7 };
                         string color = tier switch { "Lith" => "#10B981", "Meso" => "#06B6D4", "Neo" => "#EAB308", "Axi" => "#F97316", "Requiem" => "#DC2626", "Omnia" => "#38BDF8", _ => "#EAB308" };
@@ -273,6 +311,245 @@ namespace WarfAssistant.Services
                     if (pctArr[1].TryGetDouble(out double raz)) result.RazorbackPercent = Math.Round(Math.Clamp(raz, 0, 100), 1);
                 }
 
+                // Live Daily Sortie
+                if (root.TryGetProperty("Sorties", out var sortiesEl) && sortiesEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var sEl in sortiesEl.EnumerateArray())
+                    {
+                        DateTime? sExp = ParseDeUnixExpiry(sEl);
+                        if (!sExp.HasValue || sExp.Value <= utcNow) continue;
+                        var (bossRu, factionRu) = TranslateDeSortieBoss(GetStr(sEl, "Boss"));
+                        result.SortieBoss = bossRu;
+                        result.SortieFaction = factionRu;
+                        result.SortieExpiryUtc = sExp.Value;
+
+                        if (sEl.TryGetProperty("Variants", out var vars) && vars.ValueKind == JsonValueKind.Array)
+                        {
+                            int idx = 1;
+                            foreach (var v in vars.EnumerateArray())
+                            {
+                                var (nodeName, planet, _, _) = ResolveDeNodeInfo(GetStr(v, "node"));
+                                string mType = TranslateDeMissionCode(GetStr(v, "missionType"));
+                                var (modName, modDesc) = TranslateDeSortieModifier(GetStr(v, "modifierType"));
+                                result.SortieStages.Add(new SortieStageModel
+                                {
+                                    Index = idx++,
+                                    Node = string.IsNullOrEmpty(planet) ? nodeName : $"{nodeName} ({planet})",
+                                    MissionType = string.IsNullOrEmpty(mType) ? GetStr(v, "missionType") : mType,
+                                    Modifier = modName,
+                                    ModifierDesc = modDesc
+                                });
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                // Live Archon Hunt (LiteSorties)
+                if (root.TryGetProperty("LiteSorties", out var liteEl) && liteEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var aEl in liteEl.EnumerateArray())
+                    {
+                        DateTime? aExp = ParseDeUnixExpiry(aEl);
+                        if (!aExp.HasValue || aExp.Value <= utcNow) continue;
+                        string rawBoss = GetStr(aEl, "Boss");
+                        var (bossRu, shardRu, shardCol) = TranslateArchon(rawBoss);
+                        result.ArchonRawBoss = rawBoss;
+                        result.ArchonBossRu = bossRu;
+                        result.ArchonShardTitle = shardRu;
+                        result.ArchonShardColor = shardCol;
+                        result.ArchonExpiryUtc = aExp.Value;
+
+                        if (aEl.TryGetProperty("Missions", out var mArr) && mArr.ValueKind == JsonValueKind.Array)
+                        {
+                            int idx = 1;
+                            foreach (var m in mArr.EnumerateArray())
+                            {
+                                var (nodeName, planet, _, _) = ResolveDeNodeInfo(GetStr(m, "node"));
+                                string mType = TranslateDeMissionCode(GetStr(m, "missionType"));
+                                result.ArchonStages.Add(new SortieStageModel
+                                {
+                                    Index = idx++,
+                                    Node = string.IsNullOrEmpty(planet) ? nodeName : $"{nodeName} ({planet})",
+                                    MissionType = string.IsNullOrEmpty(mType) ? GetStr(m, "missionType") : mType
+                                });
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                // Live Alerts
+                if (root.TryGetProperty("Alerts", out var alertsEl) && alertsEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var al in alertsEl.EnumerateArray())
+                    {
+                        DateTime? alExp = ParseDeUnixExpiry(al);
+                        if (!alExp.HasValue || alExp.Value <= utcNow) continue;
+                        if (!al.TryGetProperty("MissionInfo", out var mi) || mi.ValueKind != JsonValueKind.Object) continue;
+
+                        var (nodeName, planet, mFallback, facFallback) = ResolveDeNodeInfo(GetStr(mi, "location"));
+                        string mType = TranslateDeMissionCode(GetStr(mi, "missionType"));
+                        if (string.IsNullOrEmpty(mType)) mType = mFallback;
+                        string fac = TranslateDeFactionCode(GetStr(mi, "faction"));
+                        if (string.IsNullOrEmpty(fac)) fac = facFallback;
+
+                        string rewStr = "Кредиты + Награда";
+                        if (mi.TryGetProperty("missionReward", out var mr) && mr.ValueKind == JsonValueKind.Object)
+                        {
+                            var parts = new List<string>();
+                            if (mr.TryGetProperty("countedItems", out var ci) && ci.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var cItem in ci.EnumerateArray())
+                                {
+                                    string uid = GetStr(cItem, "ItemType");
+                                    int cnt = cItem.TryGetProperty("ItemCount", out var cEl) ? cEl.GetInt32() : 1;
+                                    string rName = catalog != null
+                                        ? ResolveLocalizedCatalogName(uid, uid.Split('/').LastOrDefault(), catalog)
+                                        : TranslateCommonReward(uid.Split('/').LastOrDefault() ?? "Награда");
+                                    parts.Add(cnt > 1 ? $"{cnt:N0}× {rName}" : rName);
+                                }
+                            }
+                            if (mr.TryGetProperty("items", out var itArr) && itArr.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var itEl in itArr.EnumerateArray())
+                                {
+                                    string uid = itEl.GetString() ?? "";
+                                    if (!string.IsNullOrEmpty(uid))
+                                    {
+                                        string rName = catalog != null
+                                            ? ResolveLocalizedCatalogName(uid, uid.Split('/').LastOrDefault(), catalog)
+                                            : TranslateCommonReward(uid.Split('/').LastOrDefault() ?? "Награда");
+                                        parts.Add(rName);
+                                    }
+                                }
+                            }
+                            if (parts.Count > 0)
+                                rewStr = string.Join(" + ", parts);
+                            else if (mr.TryGetProperty("credits", out var crEl) && crEl.TryGetInt32(out int cr) && cr > 0)
+                                rewStr = $"{cr:N0} Кредитов";
+                        }
+
+                        string descRaw = GetStr(mi, "descText").Split('/').LastOrDefault() ?? "Тревога";
+                        string title = descRaw switch
+                        {
+                            "TennoUnitedAlert" => "Тревога: Тэнно Едины",
+                            "GiftFromTheLotus" => "Дар Лотос",
+                            _ => "Сигнал Тревоги"
+                        };
+
+                        result.Alerts.Add(new AlertItem
+                        {
+                            Title = title,
+                            Node = nodeName,
+                            Planet = planet,
+                            MissionType = mType,
+                            Faction = fac,
+                            Reward = rewStr,
+                            ExpiryUtc = alExp.Value
+                        });
+                    }
+                }
+
+                // Live Darvo Daily Deal
+                if (root.TryGetProperty("DailyDeals", out var dealsEl) && dealsEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var d in dealsEl.EnumerateArray())
+                    {
+                        DateTime? dExp = ParseDeUnixExpiry(d);
+                        if (!dExp.HasValue || dExp.Value <= utcNow) continue;
+                        string uid = GetStr(d, "StoreItem");
+                        string name = catalog != null
+                            ? ResolveLocalizedCatalogName(uid, uid.Split('/').LastOrDefault(), catalog)
+                            : (uid.Split('/').LastOrDefault() ?? string.Empty);
+                        result.DarvoDeal = new DarvoDealModel
+                        {
+                            ItemName = name,
+                            OriginalPrice = d.TryGetProperty("OriginalPrice", out var op) ? op.GetInt32() : 0,
+                            SalePrice = d.TryGetProperty("SalePrice", out var sp) ? sp.GetInt32() : 0,
+                            DiscountPercent = d.TryGetProperty("Discount", out var dp) ? dp.GetInt32() : 0,
+                            TotalCount = d.TryGetProperty("AmountTotal", out var tp) ? tp.GetInt32() : 0,
+                            SoldCount = d.TryGetProperty("AmountSold", out var sop) ? sop.GetInt32() : 0,
+                            ExpiryUtc = dExp.Value
+                        };
+                        break;
+                    }
+                }
+
+                // Live Void Trader (Baro Ki'Teer)
+                if (root.TryGetProperty("VoidTraders", out var vtEl) && vtEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var b in vtEl.EnumerateArray())
+                    {
+                        DateTime? bAct = ParseDeUnixTimestamp(b, "Activation");
+                        DateTime? bExp = ParseDeUnixExpiry(b);
+                        if (!bExp.HasValue) continue;
+                        var (nodeName, planet, _, _) = ResolveDeNodeInfo(GetStr(b, "Node"));
+                        result.TraderCharacter = "Баро Ки'Тиир";
+                        result.TraderLocation = string.IsNullOrEmpty(planet) ? nodeName : $"{nodeName} ({planet})";
+                        result.TraderActivationUtc = bAct ?? utcNow;
+                        result.TraderExpiryUtc = bExp.Value;
+                        break;
+                    }
+                }
+
+                // Live Global Upgrades (Weekend Boosters)
+                if (root.TryGetProperty("GlobalUpgrades", out var upgEl) && upgEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var g in upgEl.EnumerateArray())
+                    {
+                        DateTime? gExp = ParseDeUnixExpiry(g);
+                        if (!gExp.HasValue || gExp.Value <= utcNow) continue;
+                        string rawType = GetStr(g, "UpgradeType");
+                        string label = rawType switch
+                        {
+                            "GAMEPLAY_PICKUP_AMOUNT" => "Дроп ресурсов",
+                            "GAMEPLAY_DROP_RATE" or "GAMEPLAY_RESOURCE_DROP_CHANCE" => "Шанс дропа ресурсов",
+                            "GAMEPLAY_KILL_XP_AMOUNT" => "Синтез (Опыт)",
+                            "GAMEPLAY_MONEY_REWARD_AMOUNT" or "GAMEPLAY_MONEY_PICKUP_AMOUNT" => "Кредиты",
+                            _ => rawType.Replace("GAMEPLAY_", "").Replace('_', ' ')
+                        };
+                        double val = g.TryGetProperty("Value", out var vEl) && vEl.ValueKind == JsonValueKind.Number ? vEl.GetDouble() : 2;
+                        result.Boosters.Add(new GlobalBoosterModel
+                        {
+                            Title = "Глобальный бустер",
+                            EffectText = $"{label} ×{val:0.##}",
+                            ExpiryUtc = gExp.Value
+                        });
+                    }
+                }
+
+                // Live Nightwave SeasonInfo
+                if (root.TryGetProperty("SeasonInfo", out var nwEl) && nwEl.ValueKind == JsonValueKind.Object)
+                {
+                    result.NightwaveExpiryUtc = ParseDeUnixExpiry(nwEl);
+                    result.NightwaveTag = GetStr(nwEl, "AffiliationTag");
+                    result.NightwavePhase = nwEl.TryGetProperty("Phase", out var phEl) && phEl.ValueKind == JsonValueKind.Number ? phEl.GetInt32() : 0;
+
+                    if (nwEl.TryGetProperty("ActiveChallenges", out var chArr) && chArr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var ch in chArr.EnumerateArray())
+                        {
+                            DateTime? chExp = ParseDeUnixExpiry(ch);
+                            if (!chExp.HasValue || chExp.Value <= utcNow) continue;
+                            bool isDaily = ch.TryGetProperty("Daily", out var dEl) && dEl.ValueKind == JsonValueKind.True;
+                            string path = GetStr(ch, "Challenge");
+                            bool isElite = path.Contains("/WeeklyHard/", StringComparison.OrdinalIgnoreCase);
+                            int rep = isDaily ? 1000 : (isElite ? 7000 : 4500);
+                            var (titleRu, descRu) = TranslateDeSeasonChallengePath(path);
+                            result.NightwaveChallenges.Add(new NightwaveChallenge
+                            {
+                                Title = titleRu,
+                                Description = descRu,
+                                Reputation = rep,
+                                IsDaily = isDaily,
+                                IsElite = isElite,
+                                ExpiryUtc = chExp.Value
+                            });
+                        }
+                    }
+                }
+
                 return result;
             }
             catch
@@ -281,9 +558,11 @@ namespace WarfAssistant.Services
             }
         }
 
-        private static DateTime? ParseDeUnixExpiry(JsonElement el)
+        private static DateTime? ParseDeUnixExpiry(JsonElement el) => ParseDeUnixTimestamp(el, "Expiry");
+
+        private static DateTime? ParseDeUnixTimestamp(JsonElement el, string propName)
         {
-            if (el.TryGetProperty("Expiry", out var expEl) &&
+            if (el.TryGetProperty(propName, out var expEl) &&
                 expEl.TryGetProperty("$date", out var dEl) &&
                 dEl.TryGetProperty("$numberLong", out var nlEl))
             {
@@ -298,18 +577,19 @@ namespace WarfAssistant.Services
         {
             "MT_SURVIVAL" => "Выживание",
             "MT_DEFENSE" => "Оборона",
-            "MT_INTERCEPTION" => "Перехват",
-            "MT_EXCAVATION" => "Раскопки",
-            "MT_DISRUPTION" => "Сбой",
+            "MT_INTERCEPTION" or "MT_TERRITORY" => "Перехват",
+            "MT_EXCAVATION" or "MT_EXCAVATE" => "Раскопки",
+            "MT_DISRUPTION" or "MT_ARTIFACT" => "Сбой",
             "MT_EVACUATION" => "Перебежчики",
             "MT_INFESTED_SALVAGE" => "Сбор ресурсов",
-            "MT_MOBILE_DEFENSE" => "Мобильная оборона",
-            "MT_EXTERMINATION" => "Зачистка",
+            "MT_MOBILE_DEFENSE" => "Моб. Оборона",
+            "MT_EXTERMINATION" or "MT_EXTERMINATE" => "Зачистка",
             "MT_RESCUE" => "Спасение",
-            "MT_CAPTURE" or "MT_TERRITORY" => "Захват",
+            "MT_CAPTURE" => "Захват",
             "MT_SABOTAGE" => "Диверсия",
-            "MT_INTEL" => "Шпионаж",
+            "MT_INTEL" or "MT_COUNTER_INTEL" or "MT_ESPIONAGE" => "Шпионаж",
             "MT_HIVE" => "Улей",
+            "MT_ASSASSINATION" => "Убийство",
             "MT_ALCHEMY" or "MT_ALCHEMIST" => "Алхимия",
             "MT_VOID_CASCADE" => "Каскад Бездны",
             "MT_VOID_FLOOD" => "Потоп Бездны",
@@ -322,6 +602,93 @@ namespace WarfAssistant.Services
             "MT_RAILJACK_ORPHIX" => "Орфикс (Рэйлджек)",
             _ => string.Empty
         };
+
+        private static string TranslateDeFactionCode(string code) => code switch
+        {
+            "FC_GRINEER" => "Гринир",
+            "FC_CORPUS" => "Корпус",
+            "FC_INFESTATION" => "Заражённые",
+            "FC_OROKIN" => "Порабощённые",
+            "FC_MITW" => "Шёпот",
+            "FC_SENTIENT" => "Владеющие Разумом",
+            _ => string.Empty
+        };
+
+        private static (string BossRu, string FactionRu) TranslateDeSortieBoss(string code) => code switch
+        {
+            "SORTIE_BOSS_CORRUPTED_VOR" => ("Порабощённый Вор", "Порабощённые"),
+            "SORTIE_BOSS_ALAD" => ("Алад V", "Корпус"),
+            "SORTIE_BOSS_INFALAD" => ("Муталист Алад V", "Заражённые"),
+            "SORTIE_BOSS_AMBULAS" => ("Амбулас", "Корпус"),
+            "SORTIE_BOSS_HEK" => ("Советник Вэй Хек", "Гринир"),
+            "SORTIE_BOSS_HYENA" => ("Стая Гиен", "Корпус"),
+            "SORTIE_BOSS_KELA" => ("Кела Де Тэйм", "Гринир"),
+            "SORTIE_BOSS_KRIL" => ("Лейтенант Лех Крил", "Гринир"),
+            "SORTIE_BOSS_VOR" => ("Капитан Вор и Лех Крил", "Гринир"),
+            "SORTIE_BOSS_LEPHANTIS" => ("Лефантис", "Заражённые"),
+            "SORTIE_BOSS_PHORID" => ("Форид", "Заражённые"),
+            "SORTIE_BOSS_RAPTOR" => ("Раптор", "Корпус"),
+            "SORTIE_BOSS_RUK" => ("Генерал Саргас Рук", "Гринир"),
+            "SORTIE_BOSS_TYL" => ("Тил Регор", "Гринир"),
+            "SORTIE_BOSS_JACKAL" => ("Шакал", "Корпус"),
+            "SORTIE_BOSS_NEF" => ("Сержант", "Корпус"),
+            _ => (code.Replace("SORTIE_BOSS_", "").Replace('_', ' '), "")
+        };
+
+        private static (string NameRu, string DescRu) TranslateDeSortieModifier(string code) => code switch
+        {
+            "SORTIE_MODIFIER_LOW_ENERGY" => ("Снижение энергии (−75%)", "Запас энергии снижен на 75%, восстановление замедлено."),
+            "SORTIE_MODIFIER_FIRE" => ("Огненные очаги", "На миссии встречаются очаги огня, уменьшающие здоровье."),
+            "SORTIE_MODIFIER_FREEZE" or "SORTIE_MODIFIER_COLD" => ("Утечка криогена", "На полу зоны заморозки, замедляющие движение."),
+            "SORTIE_MODIFIER_RADIATION" => ("Радиационная опасность", "Облака радиации вызывают статус радиации."),
+            "SORTIE_MODIFIER_MAGNETIC" => ("Электромагнитные аномалии", "Магнитные поля накладывают магнитный статус."),
+            "SORTIE_MODIFIER_FOG" => ("Густой туман", "Ограниченная видимость на локации."),
+            "SORTIE_MODIFIER_ARMOR" => ("Усиленная броня врагов", "Броня противников значительно увеличена."),
+            "SORTIE_MODIFIER_SHIELDS" => ("Усиленные щиты врагов", "Щиты противников значительно увеличены."),
+            "SORTIE_MODIFIER_EXIMUS" => ("Оплот Эксимусов", "Повышенное число врагов Эксимус."),
+            "SORTIE_MODIFIER_HAZARD_FIRE" => ("Усиление стихией: Огонь", "Враги наносят дополнительный урон Огнём и имеют сопротивление ему."),
+            "SORTIE_MODIFIER_HAZARD_ICE" or "SORTIE_MODIFIER_HAZARD_COLD" => ("Усиление стихией: Холод", "Враги наносят дополнительный урон Холодом и имеют сопротивление ему."),
+            "SORTIE_MODIFIER_HAZARD_ELECTRICITY" => ("Усиление стихией: Электро", "Враги наносят дополнительный урон Электричеством."),
+            "SORTIE_MODIFIER_HAZARD_TOXIN" => ("Усиление стихией: Токсин", "Враги наносят дополнительный урон Токсином."),
+            "SORTIE_MODIFIER_HAZARD_RADIATION" => ("Усиление стихией: Радиация", "Враги наносят дополнительный урон Радиацией."),
+            "SORTIE_MODIFIER_HAZARD_MAGNETIC" => ("Усиление стихией: Магнит", "Враги наносят дополнительный урон Магнитом."),
+            "SORTIE_MODIFIER_HAZARD_VIRAL" => ("Усиление стихией: Вирус", "Враги наносят дополнительный урон Вирусом."),
+            "SORTIE_MODIFIER_HAZARD_CORROSIVE" => ("Усиление стихией: Коррозия", "Враги наносят дополнительный урон Коррозией."),
+            "SORTIE_MODIFIER_IMPACT" => ("Усиление физ. уроном: Удар", "Атаки врагов наносят повышенный ударный урон."),
+            "SORTIE_MODIFIER_PUNCTURE" => ("Усиление физ. уроном: Пронзание", "Атаки врагов наносят повышенный пронзающий урон."),
+            "SORTIE_MODIFIER_SLASH" => ("Усиление физ. уроном: Разрез", "Атаки врагов наносят повышенный режущий урон."),
+            "SORTIE_MODIFIER_BOW_ONLY" => ("Только Луки", "В миссию можно взять только лук."),
+            "SORTIE_MODIFIER_SNIPER_ONLY" => ("Только Снайперские винтовки", "В миссию можно взять только снайперскую винтовку."),
+            "SORTIE_MODIFIER_SHOTGUN_ONLY" => ("Только Дробовики", "В миссию можно взять только дробовик."),
+            "SORTIE_MODIFIER_RIFLE_ONLY" => ("Только Штурмовые винтовки", "В миссию можно взять только штурмовую винтовку."),
+            "SORTIE_MODIFIER_PISTOL_ONLY" => ("Только Пистолеты", "В миссию можно взять только вторичное оружие."),
+            "SORTIE_MODIFIER_MELEE_ONLY" => ("Только Ближний бой", "В миссию можно взять только оружие ближнего боя."),
+            _ => (code.Replace("SORTIE_MODIFIER_", "").Replace('_', ' '), "")
+        };
+
+        private static (string TitleRu, string DescRu) TranslateDeSeasonChallengePath(string path)
+        {
+            string key = path.Split('/').LastOrDefault() ?? path;
+            return key switch
+            {
+                "SeasonDailyTwoForOne" => ("Двое одним выстрелом", "Пронзите и убейте 2 или более врагов одним выстрелом из лука"),
+                "SeasonDailyKillEnemiesWithGas" => ("Биологическая опасность", "Убейте 150 врагов уроном Газом"),
+                "SeasonDailyKillEnemiesWithFire" => ("Поджигатель", "Убейте 150 врагов уроном Огнём"),
+                "SeasonDailyKillEnemiesWithCold" => ("Глубокая заморозка", "Убейте 150 врагов уроном Холодом"),
+                "SeasonDailyKillEnemiesWithElectricity" => ("Громобой", "Убейте 150 врагов уроном Электричеством"),
+                "SeasonDailyKillEnemiesWithToxin" => ("Химик", "Убейте 150 врагов уроном Токсином"),
+                "SeasonDailyKillEnemiesWithBlast" => ("Взрывотехник", "Убейте 150 врагов уроном Взрывом"),
+                "SeasonDailyPlaceGlyph" => ("Уличный Художник", "Разместите глиф в любой миссии"),
+                "SeasonWeeklyPermanentCompleteMissions16" or "SeasonWeeklyPermanentCompleteMissions" => ("Миссия Выполнена", "Завершите 15 миссий"),
+                "SeasonWeeklyPermanentKillEximus16" or "SeasonWeeklyPermanentKillEximus" => ("Устранитель Эксимусов", "Убейте 30 врагов Эксимус"),
+                "SeasonWeeklyPermanentKillEnemies16" or "SeasonWeeklyPermanentKillEnemies" => ("Без предупреждения", "Убейте 500 противников"),
+                "SeasonWeeklyBeastSlayer" => ("Убийца чудовищ", "Убейте 15 врагов-зверей / существ или мини-боссов"),
+                "SeasonWeeklyCompleteClemMission" => ("Хороший друг", "Помогите Клему выполнить его еженедельное задание"),
+                "SeasonWeeklyHardFriendsSurvival" => ("Выживание", "Завершите миссию Выживания длительностью не менее 20 минут"),
+                "SeasonWeeklyHardRailjackMissions" => ("Элитный исследователь", "Завершите 8 миссий Рэйлджека"),
+                _ => (key.Replace("SeasonWeeklyHard", "").Replace("SeasonWeeklyPermanent", "").Replace("SeasonWeekly", "").Replace("SeasonDaily", ""), "Испытание Ночной Волны")
+            };
+        }
 
         private void LoadEnRuDictFromDisk()
         {
@@ -350,8 +717,8 @@ namespace WarfAssistant.Services
                         (DateTime.UtcNow - File.GetLastWriteTimeUtc(_enRuDictCachePath)).TotalDays < 7;
                 if (_enRuDict != null && fresh) return;
 
-                var enTask = WarframeApiService.GetStringAsync(DictEnUrl);
-                var ruTask = WarframeApiService.GetStringAsync(DictRuUrl);
+                var enTask = WarframeApiService.GetStringAsync(DictEnUrl, timeoutSeconds: 6);
+                var ruTask = WarframeApiService.GetStringAsync(DictRuUrl, timeoutSeconds: 6);
                 await Task.WhenAll(enTask, ruTask).ConfigureAwait(false);
 
                 if (string.IsNullOrEmpty(enTask.Result) || string.IsNullOrEmpty(ruTask.Result))
@@ -438,7 +805,7 @@ namespace WarfAssistant.Services
                     }
                     if (string.IsNullOrEmpty(regJson))
                     {
-                        regJson = await WarframeApiService.GetStringAsync(RegionsUrl).ConfigureAwait(false);
+                        regJson = await WarframeApiService.GetStringAsync(RegionsUrl, timeoutSeconds: 6).ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(regJson))
                         {
                             try
@@ -469,7 +836,7 @@ namespace WarfAssistant.Services
                     }
                     if (string.IsNullOrEmpty(arbText))
                     {
-                        arbText = await WarframeApiService.GetStringAsync(ArbysUrl).ConfigureAwait(false);
+                        arbText = await WarframeApiService.GetStringAsync(ArbysUrl, timeoutSeconds: 6).ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(arbText))
                         {
                             try
@@ -563,6 +930,23 @@ namespace WarfAssistant.Services
                     "CrewBattleNode553" => "Флекса",
                     "CrewBattleNode554" => "Облако Н-2",
                     "CrewBattleNode555" => "Облако R-9",
+                    "SolNode400" => "Teshub",
+                    "SolNode401" => "Hepit",
+                    "SolNode402" => "Taranis",
+                    "SolNode403" => "Tiwaz",
+                    "SolNode404" => "Stribog",
+                    "SolNode405" => "Ani",
+                    "SolNode406" => "Ukko",
+                    "SolNode407" => "Oxomoco",
+                    "SolNode408" => "Belenus",
+                    "SolNode409" => "Mot",
+                    "SolNode410" => "Aten",
+                    "SolNode411" => "Marduk",
+                    "SolNode412" => "Mithra",
+                    "MercuryHUB" => "Реле Larunda",
+                    "EarthHUB" => "Реле Strata",
+                    "SaturnHUB" => "Реле Kronia",
+                    "PlutoHUB" => "Реле Orcus",
                     _ => name
                 };
 
@@ -673,36 +1057,45 @@ namespace WarfAssistant.Services
             return (rawNode, "");
         }
 
-        public static string TranslatePlanet(string en) => en switch
+        public static string TranslatePlanet(string en)
         {
-            "Mercury" => "Меркурий",
-            "Venus" => "Венера",
-            "Earth" => "Земля",
-            "Mars" => "Марс",
-            "Phobos" => "Фобос",
-            "Deimos" => "Деймос",
-            "Ceres" => "Церера",
-            "Jupiter" => "Юпитер",
-            "Europa" => "Европа",
-            "Saturn" => "Сатурн",
-            "Uranus" => "Уран",
-            "Neptune" => "Нептун",
-            "Pluto" => "Плутон",
-            "Sedna" => "Седна",
-            "Eris" => "Эрида",
-            "Void" => "Бездна",
-            "Lua" or "Moon" or "Earth_Moon" => "Луа",
-            "Kuva Fortress" or "Fortress" or "KuvaFortress" => "Крепость Кувы",
-            "Zariman" => "Зариман",
-            "Höllvania" => "Хольвания",
-            "Earth Proxima" => "Земля Проксима",
-            "Venus Proxima" => "Венера Проксима",
-            "Saturn Proxima" => "Сатурн Проксима",
-            "Neptune Proxima" => "Нептун Проксима",
-            "Pluto Proxima" => "Плутон Проксима",
-            "Veil Proxima" => "Вуаль Проксима",
-            _ => en
-        };
+            if (string.IsNullOrWhiteSpace(en)) return string.Empty;
+            string direct = en switch
+            {
+                "Mercury" => "Меркурий",
+                "Venus" => "Венера",
+                "Earth" => "Земля",
+                "Mars" => "Марс",
+                "Phobos" => "Фобос",
+                "Deimos" => "Деймос",
+                "Ceres" => "Церера",
+                "Jupiter" => "Юпитер",
+                "Europa" => "Европа",
+                "Saturn" => "Сатурн",
+                "Uranus" => "Уран",
+                "Neptune" => "Нептун",
+                "Pluto" => "Плутон",
+                "Sedna" => "Седна",
+                "Eris" => "Эрида",
+                "Void" => "Бездна",
+                "Lua" or "Moon" or "Earth_Moon" => "Луа",
+                "Kuva Fortress" or "Fortress" or "KuvaFortress" or "Kuva FortressRegionName" => "Крепость Кувы",
+                "Zariman" or "ZarimanRegionName" or "Zariman Ten Zero" or "The Zariman" => "Зариман",
+                "Höllvania" or "Hollvania" or "HollvaniaRegionName" => "Хольвания",
+                "Earth Proxima" => "Земля Проксима",
+                "Venus Proxima" => "Венера Проксима",
+                "Saturn Proxima" => "Сатурн Проксима",
+                "Neptune Proxima" => "Нептун Проксима",
+                "Pluto Proxima" => "Плутон Проксима",
+                "Veil Proxima" => "Вуаль Проксима",
+                _ => string.Empty
+            };
+            if (!string.IsNullOrEmpty(direct)) return direct;
+            if (en.Contains("Zariman", StringComparison.OrdinalIgnoreCase)) return "Зариман";
+            if (en.Contains("Hollvania", StringComparison.OrdinalIgnoreCase) || en.Contains("Höllvania", StringComparison.OrdinalIgnoreCase)) return "Хольвания";
+            if (en.Contains("Kuva", StringComparison.OrdinalIgnoreCase)) return "Крепость Кувы";
+            return en;
+        }
 
         public static string TranslateMission(string en)
         {
@@ -776,16 +1169,26 @@ namespace WarfAssistant.Services
             return (rawBoss, "Осколок Архонта", "#F59E0B");
         }
 
-        public static string GetArchonShardIconPath(string rawBoss)
+        public static (string BaseUrl, string GlowUrl) GetArchonShardIconUrls(string rawBoss)
         {
             if (rawBoss.Contains("Boreal", StringComparison.OrdinalIgnoreCase))
-                return "/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardBorealMythicGlow.png";
+                return (
+                    "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardBoreal.png!00_ghf9Qbj2Tca5VYRXNfLoxA",
+                    "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardBorealMythicGlow.png!00_WNJLrmvOGuvKkYAKfrP9uQ");
             if (rawBoss.Contains("Amar", StringComparison.OrdinalIgnoreCase))
-                return "/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardAmarMythicGlow.png";
+                return (
+                    "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardAmar.png!00_rSQSghtWz+j0RYah4EmfVg",
+                    "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardAmarMythicGlow.png!00_PRyBTogo3mZHDWxAUViI8Q");
             if (rawBoss.Contains("Nira", StringComparison.OrdinalIgnoreCase))
-                return "/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardNiraMythicGlow.png";
-            return "/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardMythicGreenGlow.png";
+                return (
+                    "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardNira.png!00_dn6QF0OanOjP8TYAHbXG5w",
+                    "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardNiraMythicGlow.png!00_HvVayxayGKrg6RVvTV6sSQ");
+            return (
+                "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardGreen.png!00_3bL3gFazx0uV8jEjV9Nliw",
+                "https://content.warframe.com/PublicExport/Lotus/Interface/Graphics/Helminth/ArchonShards/ArchonShardMythicGreenGlow.png!00_KYl-QUF92aMbufLIlsUl1A");
         }
+
+        public static string GetArchonShardIconPath(string rawBoss) => GetArchonShardIconUrls(rawBoss).GlowUrl;
 
         public static string TranslateModifier(string raw)
         {
